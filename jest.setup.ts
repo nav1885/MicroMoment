@@ -1,4 +1,5 @@
-// Jest setup — mock native modules that don't run in test environment
+// Jest setup — mock native modules unavailable in test environment
+
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(),
   notificationAsync: jest.fn(),
@@ -8,16 +9,18 @@ jest.mock('expo-haptics', () => ({
 
 jest.mock('expo-notifications', () => ({
   requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
-  scheduleNotificationAsync: jest.fn(),
-  cancelScheduledNotificationAsync: jest.fn(),
+  scheduleNotificationAsync: jest.fn().mockResolvedValue('notification-id'),
+  cancelScheduledNotificationAsync: jest.fn().mockResolvedValue(undefined),
   getAllScheduledNotificationsAsync: jest.fn().mockResolvedValue([]),
   setNotificationHandler: jest.fn(),
+  AndroidImportance: { MAX: 5 },
 }))
 
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
-)
-
-jest.mock('expo-sqlite', () => ({
-  openDatabaseAsync: jest.fn(),
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn().mockResolvedValue(null),
+  setItem: jest.fn().mockResolvedValue(undefined),
+  removeItem: jest.fn().mockResolvedValue(undefined),
+  multiGet: jest.fn().mockResolvedValue([]),
+  multiSet: jest.fn().mockResolvedValue(undefined),
+  clear: jest.fn().mockResolvedValue(undefined),
 }))
