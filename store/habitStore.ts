@@ -18,7 +18,9 @@ import {
   insertCompletion,
   getTodayCompletions,
   hasCompletionToday,
+  getCompletionsForHabit,
 } from '../db/completions'
+import { calculateStreak } from '../utils/streakCalculator'
 
 export const MAX_HABITS = 5
 const NOTIFY_MORNING_KEY = 'notify_morning'
@@ -40,11 +42,14 @@ const DEFAULT_NOTIFICATION_TIMES: NotificationTimes = {
 export interface HabitStore {
   habits: Habit[]
   todayCompletions: Completion[]
+  streaks: Record<string, number>
   isLoading: boolean
   notificationTimes: NotificationTimes
 
   loadHabits: () => Promise<void>
   loadTodayCompletions: () => Promise<void>
+  loadStreaks: () => Promise<void>
+  getHabitStreak: (habitId: string) => Promise<number>
   createHabit: (input: CreateHabitInput) => Promise<void>
   updateHabit: (id: string, input: Partial<CreateHabitInput>) => Promise<void>
   deleteHabit: (id: string) => Promise<void>
@@ -60,6 +65,7 @@ export interface HabitStore {
 export const useHabitStore = create<HabitStore>((set, get) => ({
   habits: [],
   todayCompletions: [],
+  streaks: {},
   isLoading: false,
   notificationTimes: { ...DEFAULT_NOTIFICATION_TIMES },
 
@@ -81,6 +87,30 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
     } catch (err) {
       console.error('[habitStore] loadTodayCompletions error:', err)
     }
+  },
+
+  loadStreaks: async () => {
+    const { habits } = get()
+    try {
+      const entries = await Promise.all(
+        habits.map(async (h) => {
+          const completions = await getCompletionsForHabit(h.id)
+          const dates = completions.map((c) => c.completed_date)
+          const { currentStreak } = calculateStreak(dates)
+          return [h.id, currentStreak] as const
+        })
+      )
+      set({ streaks: Object.fromEntries(entries) })
+    } catch (err) {
+      console.error('[habitStore] loadStreaks error:', err)
+    }
+  },
+
+  getHabitStreak: async (habitId: string): Promise<number> => {
+    const completions = await getCompletionsForHabit(habitId)
+    const dates = completions.map((c) => c.completed_date)
+    const { currentStreak } = calculateStreak(dates)
+    return currentStreak
   },
 
   createHabit: async (input: CreateHabitInput) => {

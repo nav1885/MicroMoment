@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react'
+import React, { useCallback, useRef } from 'react'
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Pressable,
   SafeAreaView,
 } from 'react-native'
+import ConfettiCannon from 'react-native-confetti-cannon'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { useHabitStore } from '../../store/habitStore'
 import { CompletionRing } from '../../components/CompletionRing'
@@ -14,6 +15,8 @@ import { HabitCard } from '../../components/HabitCard'
 import { DailyMessage } from '../../components/DailyMessage'
 import { useThemeColors } from '../../hooks/useThemeColors'
 import type { Habit } from '../../db/habits'
+
+const MILESTONE_STREAKS = new Set([7, 14, 21, 30, 60, 90, 180, 365])
 
 type TimeOfDay = 'morning' | 'afternoon' | 'evening'
 const TIME_GROUPS: { key: TimeOfDay; label: string }[] = [
@@ -33,13 +36,15 @@ function formatDate(date: Date): string {
 export default function HomeScreen() {
   const colors = useThemeColors()
   const router = useRouter()
-  const { habits, todayCompletions, loadHabits, loadTodayCompletions, markComplete } =
+  const confettiRef = useRef<ConfettiCannon>(null)
+  const { habits, todayCompletions, streaks, loadHabits, loadTodayCompletions, loadStreaks, markComplete, getHabitStreak } =
     useHabitStore()
 
   useFocusEffect(
     useCallback(() => {
       loadHabits()
       loadTodayCompletions()
+      loadStreaks()
     }, [])
   )
 
@@ -49,6 +54,13 @@ export default function HomeScreen() {
   const handleComplete = async (habitId: string) => {
     try {
       await markComplete(habitId)
+      // Check if new streak hits a milestone
+      const newStreak = await getHabitStreak(habitId)
+      if (MILESTONE_STREAKS.has(newStreak)) {
+        confettiRef.current?.start()
+      }
+      // Refresh streaks for all habits
+      loadStreaks()
     } catch {
       // Already completed — ignore silently
     }
@@ -70,6 +82,13 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
+      <ConfettiCannon
+        ref={confettiRef}
+        count={120}
+        origin={{ x: -10, y: 0 }}
+        autoStart={false}
+        fadeOut
+      />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
@@ -126,6 +145,7 @@ export default function HomeScreen() {
                   key={habit.id}
                   habit={habit}
                   completed={completedIds.has(habit.id)}
+                  streak={streaks[habit.id]}
                   onComplete={() => handleComplete(habit.id)}
                 />
               ))}
