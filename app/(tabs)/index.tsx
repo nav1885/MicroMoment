@@ -14,6 +14,7 @@ import { CompletionRing } from '../../components/CompletionRing'
 import { HabitCard } from '../../components/HabitCard'
 import { DailyMessage } from '../../components/DailyMessage'
 import { useThemeColors } from '../../hooks/useThemeColors'
+import { scheduleHabitReminders } from '../../utils/notifications'
 import type { Habit } from '../../db/habits'
 
 const MILESTONE_STREAKS = new Set([7, 14, 21, 30, 60, 90, 180, 365])
@@ -37,14 +38,20 @@ export default function HomeScreen() {
   const colors = useThemeColors()
   const router = useRouter()
   const confettiRef = useRef<ConfettiCannon>(null)
-  const { habits, todayCompletions, streaks, loadHabits, loadTodayCompletions, loadStreaks, markComplete, getHabitStreak } =
+  const { habits, todayCompletions, streaks, notificationTimes, loadHabits, loadTodayCompletions, loadStreaks, loadNotificationTimes, markComplete, getHabitStreak } =
     useHabitStore()
 
   useFocusEffect(
     useCallback(() => {
-      loadHabits()
-      loadTodayCompletions()
-      loadStreaks()
+      const refresh = async () => {
+        await loadHabits()
+        loadTodayCompletions()
+        loadStreaks()
+        await loadNotificationTimes()
+        // Reschedule reminders in case habits changed while away
+        scheduleHabitReminders(notificationTimes, habits)
+      }
+      refresh()
     }, [])
   )
 

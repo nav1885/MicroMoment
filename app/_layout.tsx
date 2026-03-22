@@ -3,9 +3,14 @@ import { Stack } from 'expo-router'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { StatusBar } from 'expo-status-bar'
 import { useColorScheme } from 'react-native'
+import { requestNotificationPermission } from '../utils/notifications'
 
 export default function RootLayout() {
   const colorScheme = useColorScheme()
+
+  useEffect(() => {
+    requestNotificationPermission()
+  }, [])
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
