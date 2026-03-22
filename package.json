@@ -1,21 +1,52 @@
 {
-  "name": "mm-scaffold",
+  "name": "micromoment",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "jest --watchAll=false",
+    "test:coverage": "jest --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "transformIgnorePatterns": [
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|react-navigation|@react-navigation/.*|zustand)"
+    ],
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1"
+    },
+    "setupFiles": ["./jest.setup.ts"]
   },
   "dependencies": {
+    "@expo/cli": "^55.0.18",
+    "@react-native-async-storage/async-storage": "^3.0.1",
     "expo": "~55.0.8",
+    "expo-application": "^55.0.10",
+    "expo-crypto": "^55.0.10",
+    "expo-haptics": "^55.0.9",
+    "expo-linking": "^55.0.8",
+    "expo-notifications": "^55.0.13",
+    "expo-router": "^55.0.7",
+    "expo-sqlite": "^55.0.11",
     "expo-status-bar": "~55.0.4",
+    "expo-store-review": "^55.0.9",
+    "expo-web-browser": "^55.0.10",
     "react": "19.2.0",
-    "react-native": "0.83.2"
+    "react-native": "0.83.2",
+    "react-native-confetti-cannon": "^1.5.2",
+    "react-native-gesture-handler": "^2.30.0",
+    "react-native-reanimated": "^4.2.3",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.2.2",
+    "jest": "^30.3.0",
+    "jest-expo": "^55.0.11",
     "typescript": "~5.9.2"
   },
   "private": true
