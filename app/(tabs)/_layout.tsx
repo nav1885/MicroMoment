@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router'
-import { useColorScheme, View } from 'react-native'
+import { useColorScheme, Text } from 'react-native'
 import { Colors } from '../../constants/colors'
 
 export default function TabLayout() {
@@ -22,34 +22,29 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Today',
-          tabBarIcon: ({ color }) => (
-            <TabIcon symbol="checkmark.circle.fill" color={color} />
-          ),
+          tabBarIcon: ({ color }) => <TabIcon glyph="✓" color={color} />,
         }}
       />
       <Tabs.Screen
         name="progress"
         options={{
           title: 'Progress',
-          tabBarIcon: ({ color }) => (
-            <TabIcon symbol="chart.bar.fill" color={color} />
-          ),
+          tabBarIcon: ({ color }) => <TabIcon glyph="▦" color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ color }) => (
-            <TabIcon symbol="gearshape.fill" color={color} />
-          ),
+          tabBarIcon: ({ color }) => <TabIcon glyph="⚙" color={color} />,
         }}
       />
     </Tabs>
   )
 }
 
-function TabIcon({ symbol, color }: { symbol: string; color: string }) {
-  // Placeholder — will use SF Symbols or emoji icons
-  return <View style={{ width: 24, height: 24 }} />
+function TabIcon({ glyph, color }: { glyph: string; color: string }) {
+  return (
+    <Text style={{ fontSize: 20, color, lineHeight: 24 }}>{glyph}</Text>
+  )
 }
