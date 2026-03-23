@@ -7,9 +7,9 @@ export default ({ config }) => ({
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
   splash: {
-    image: './assets/splash.png',
+    image: './assets/splash-icon.png',
     resizeMode: 'contain',
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#4F7942',
   },
   ios: {
     supportsTablet: false,

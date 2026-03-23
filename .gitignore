@@ -40,3 +40,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Store submission credentials (never commit these)
+google-service-account.json
+*.env.local
