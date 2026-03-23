@@ -16,6 +16,7 @@ import { DailyMessage } from '../../components/DailyMessage'
 import { useThemeColors } from '../../hooks/useThemeColors'
 import { scheduleHabitReminders } from '../../utils/notifications'
 import { AnimatedPressable } from '../../components/AnimatedPressable'
+import { trackHabitCompleted, trackStreakMilestone } from '../../utils/analytics'
 import type { Habit } from '../../db/habits'
 
 const MILESTONE_STREAKS = new Set([7, 14, 21, 30, 60, 90, 180, 365])
@@ -64,8 +65,10 @@ export default function HomeScreen() {
       await markComplete(habitId)
       // Check if new streak hits a milestone
       const newStreak = await getHabitStreak(habitId)
+      trackHabitCompleted(habitId, newStreak)
       if (MILESTONE_STREAKS.has(newStreak)) {
         confettiRef.current?.start()
+        trackStreakMilestone(habitId, newStreak)
       }
       // Refresh streaks for all habits
       loadStreaks()

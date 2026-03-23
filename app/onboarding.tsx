@@ -12,6 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import { useThemeColors } from '../hooks/useThemeColors'
 import { AnimatedPressable } from '../components/AnimatedPressable'
+import { trackOnboardingCompleted } from '../utils/analytics'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 const ONBOARDING_KEY = 'onboarding_complete'
@@ -62,6 +63,7 @@ export default function OnboardingScreen() {
 
   const handleGetStarted = async () => {
     await AsyncStorage.setItem(ONBOARDING_KEY, '1')
+    trackOnboardingCompleted()
     router.replace('/(tabs)')
   }
 
