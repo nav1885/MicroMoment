@@ -11,6 +11,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import { useThemeColors } from '../hooks/useThemeColors'
+import { AnimatedPressable } from '../components/AnimatedPressable'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 const ONBOARDING_KEY = 'onboarding_complete'
@@ -101,8 +102,9 @@ export default function OnboardingScreen() {
 
       {/* CTA button */}
       <View style={styles.buttonRow}>
-        <Pressable
+        <AnimatedPressable
           onPress={handleNext}
+          haptic
           style={styles.ctaButton}
           accessibilityRole="button"
           accessibilityLabel={isLast ? 'Get started' : 'Next slide'}
@@ -110,7 +112,7 @@ export default function OnboardingScreen() {
           <Text style={[styles.ctaText, { color: colors.primary }]}>
             {isLast ? 'Get Started' : 'Next'}
           </Text>
-        </Pressable>
+        </AnimatedPressable>
 
         {!isLast && (
           <Pressable

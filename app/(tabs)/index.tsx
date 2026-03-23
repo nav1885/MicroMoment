@@ -15,6 +15,7 @@ import { HabitCard } from '../../components/HabitCard'
 import { DailyMessage } from '../../components/DailyMessage'
 import { useThemeColors } from '../../hooks/useThemeColors'
 import { scheduleHabitReminders } from '../../utils/notifications'
+import { AnimatedPressable } from '../../components/AnimatedPressable'
 import type { Habit } from '../../db/habits'
 
 const MILESTONE_STREAKS = new Set([7, 14, 21, 30, 60, 90, 180, 365])
@@ -161,8 +162,9 @@ export default function HomeScreen() {
         })}
 
         {/* Add habit button */}
-        <Pressable
+        <AnimatedPressable
           onPress={handleAddHabit}
+          haptic={habits.length < 5}
           style={[
             styles.addButton,
             {
@@ -182,7 +184,7 @@ export default function HomeScreen() {
           >
             + Add Habit
           </Text>
-        </Pressable>
+        </AnimatedPressable>
       </ScrollView>
     </SafeAreaView>
   )
