@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, Text, StyleSheet, Pressable } from 'react-native'
+import { View, Text, StyleSheet, Pressable, TouchableOpacity } from 'react-native'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -10,14 +10,22 @@ import { CheckButton } from './CheckButton'
 import { useThemeColors } from '../hooks/useThemeColors'
 import type { Habit } from '../db/habits'
 
+const TIME_BADGES: Record<string, string> = {
+  morning: '🌅',
+  afternoon: '☀️',
+  evening: '🌙',
+}
+
 interface HabitCardProps {
   habit: Habit
   completed: boolean
   streak?: number
   onComplete: () => void
+  drag?: () => void
+  isActive?: boolean
 }
 
-export function HabitCard({ habit, completed, streak, onComplete }: HabitCardProps) {
+export function HabitCard({ habit, completed, streak, onComplete, drag, isActive }: HabitCardProps) {
   const colors = useThemeColors()
   const router = useRouter()
   const opacity = useSharedValue(1)
@@ -75,6 +83,17 @@ export function HabitCard({ habit, completed, streak, onComplete }: HabitCardPro
             </View>
           </View>
           <CheckButton completed={completed} onPress={onComplete} />
+          {drag && (
+            <TouchableOpacity
+              onLongPress={drag}
+              delayLongPress={150}
+              style={styles.dragHandle}
+              hitSlop={8}
+              accessibilityLabel="Hold to drag and reorder"
+            >
+              <Text style={[styles.dragIcon, { color: colors.textSecondary }]}>≡</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </Pressable>
     </Animated.View>
@@ -119,5 +138,15 @@ const styles = StyleSheet.create({
   streak: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  dragHandle: {
+    paddingLeft: 10,
+    paddingVertical: 4,
+    justifyContent: 'center',
+  },
+  dragIcon: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
 })
