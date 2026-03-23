@@ -20,11 +20,10 @@ jest.mock('../../db/completions', () => ({
   insertCompletion: jest.fn(),
   getTodayCompletions: jest.fn().mockResolvedValue([]),
   hasCompletionToday: jest.fn().mockResolvedValue(false),
+  getCompletionsForHabit: jest.fn().mockResolvedValue([]),
 }))
 
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('../../__mocks__/async-storage')
-)
+// @react-native-async-storage/async-storage is mocked via jest.config.js moduleNameMapper
 
 import { useHabitStore, MAX_HABITS } from '../../store/habitStore'
 import * as dbHabits from '../../db/habits'
