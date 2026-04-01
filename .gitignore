@@ -44,3 +44,6 @@ yarn-error.*
 # Store submission credentials (never commit these)
 google-service-account.json
 *.env.local
+
+# test coverage
+coverage/

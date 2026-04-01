@@ -11,7 +11,7 @@ import {
   Platform,
   SafeAreaView,
 } from 'react-native'
-import { useRouter } from 'expo-router'
+import { Stack, useRouter } from 'expo-router'
 import { useHabitStore } from '../../store/habitStore'
 import { useThemeColors } from '../../hooks/useThemeColors'
 
@@ -63,43 +63,52 @@ export default function NewHabitScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: 'New Habit',
+          headerTitleAlign: 'center',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
+          headerTitleStyle: { fontWeight: '600' },
+          headerLeft: () => (
+            <Pressable
+              onPress={() => router.back()}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel"
+              style={{ marginLeft: 4 }}
+            >
+              <Text style={{ color: colors.textSecondary, fontSize: 24 }}>✕</Text>
+            </Pressable>
+          ),
+          headerRight: () => (
+            <Pressable
+              onPress={handleSave}
+              disabled={saving}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Save habit"
+            >
+              <Text style={{ color: saving ? colors.textSecondary : colors.primary, fontSize: 26 }}>✓</Text>
+            </Pressable>
+          ),
+        }}
+      />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.border }]}>
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Cancel"
-          >
-            <Text style={[styles.headerCancel, { color: colors.textSecondary }]}>Cancel</Text>
-          </Pressable>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>New Habit</Text>
-          <Pressable
-            onPress={handleSave}
-            disabled={saving}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Save habit"
-          >
-            <Text style={[styles.headerSave, { color: saving ? colors.textSecondary : colors.primary }]}>
-              Save
-            </Text>
-          </Pressable>
-        </View>
 
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          keyboardDismissMode="on-drag"
         >
           {/* Emoji */}
           <View style={styles.section}>
-            <Text style={[styles.sectionLabel, { color: colors.sectionHeader }]}>EMOJI</Text>
             <Text style={styles.emojiPreview}>{emoji}</Text>
             <ScrollView
               horizontal
@@ -231,6 +240,7 @@ export default function NewHabitScreen() {
               Habits must take 1–5 minutes to build consistency.
             </Text>
           </View>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -240,17 +250,6 @@ export default function NewHabitScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   flex: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  headerCancel: { fontSize: 16 },
-  headerTitle: { fontSize: 17, fontWeight: '600' },
-  headerSave: { fontSize: 16, fontWeight: '600' },
   scroll: { flex: 1 },
   content: { padding: 20, paddingBottom: 48 },
   section: { marginBottom: 28 },

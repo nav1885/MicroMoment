@@ -35,7 +35,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="habit/[id]" options={{ presentation: 'card', headerShown: false }} />
-        <Stack.Screen name="habit/new" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="habit/new" options={{ presentation: 'modal', headerShown: false, headerBackVisible: false }} />
       </Stack>
     </GestureHandlerRootView>
   )
