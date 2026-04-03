@@ -37,7 +37,7 @@ const TIME_LABELS: Record<TimeOfDay, string> = {
 }
 
 export default function HabitDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>()
+  const { id, mode } = useLocalSearchParams<{ id: string; mode?: string }>()
   const colors = useThemeColors()
   const router = useRouter()
   const {
@@ -66,6 +66,13 @@ export default function HabitDetailScreen() {
       loadTodayCompletions()
     }, [])
   )
+
+  // Auto-enter edit mode when navigated with ?mode=edit
+  React.useEffect(() => {
+    if (mode === 'edit' && habit) {
+      enterEditMode()
+    }
+  }, [mode, habit?.id])
 
   const habit = habits.find((h) => h.id === id)
   const isCompletedToday = todayCompletions.some((c) => c.habit_id === id)

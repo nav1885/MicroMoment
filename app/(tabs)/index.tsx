@@ -5,6 +5,8 @@ import {
   StyleSheet,
   Pressable,
   SafeAreaView,
+  Dimensions,
+  Alert,
 } from 'react-native'
 import DraggableFlatList, {
   ScaleDecorator,
@@ -48,6 +50,7 @@ export default function HomeScreen() {
     markComplete,
     getHabitStreak,
     reorderHabits,
+    deleteHabit,
   } = useHabitStore()
 
   useFocusEffect(
@@ -90,6 +93,27 @@ export default function HomeScreen() {
     reorderHabits(data.map((h) => h.id))
   }
 
+  const handleEdit = (habitId: string) => {
+    router.push(`/habit/${habitId}?mode=edit`)
+  }
+
+  const handleDelete = (habitId: string, habitName: string) => {
+    Alert.alert(
+      `Delete "${habitName}"?`,
+      'This permanently deletes the habit and all its history. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteHabit(habitId)
+          },
+        },
+      ]
+    )
+  }
+
   const renderItem = ({ item, drag, isActive }: RenderItemParams<Habit>) => (
     <ScaleDecorator>
       <HabitCard
@@ -97,6 +121,8 @@ export default function HomeScreen() {
         completed={completedIds.has(item.id)}
         streak={streaks[item.id]}
         onComplete={() => handleComplete(item.id)}
+        onEdit={() => handleEdit(item.id)}
+        onDelete={() => handleDelete(item.id, item.name)}
         drag={drag}
         isActive={isActive}
       />
@@ -182,9 +208,10 @@ export default function HomeScreen() {
       <ConfettiCannon
         ref={confettiRef}
         count={120}
-        origin={{ x: -10, y: 0 }}
+        origin={{ x: Dimensions.get('window').width / 2, y: -20 }}
         autoStart={false}
         fadeOut
+        fallSpeed={3000}
       />
       <DraggableFlatList
         data={habits}
