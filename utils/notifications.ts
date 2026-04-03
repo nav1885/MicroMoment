@@ -21,6 +21,18 @@ Notifications.setNotificationHandler({
   }),
 })
 
+// Android 8+ requires a notification channel or notifications are silently dropped.
+export async function setupNotificationChannel(): Promise<void> {
+  if (process.env.EXPO_OS === 'android') {
+    await Notifications.setNotificationChannelAsync('habit-reminders', {
+      name: 'Habit Reminders',
+      importance: Notifications.AndroidImportance.HIGH,
+      sound: 'default',
+      vibrationPattern: [0, 250, 250, 250],
+    })
+  }
+}
+
 export async function requestNotificationPermission(): Promise<boolean> {
   const { status: existing } = await Notifications.getPermissionsAsync()
   if (existing === 'granted') return true
@@ -71,6 +83,7 @@ export async function scheduleHabitReminders(
         type: SchedulableTriggerInputTypes.DAILY,
         hour,
         minute,
+        channelId: 'habit-reminders',
       },
     })
   }

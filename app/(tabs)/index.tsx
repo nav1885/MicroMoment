@@ -60,7 +60,9 @@ export default function HomeScreen() {
         loadTodayCompletions()
         loadStreaks()
         await loadNotificationTimes()
-        scheduleHabitReminders(notificationTimes, habits)
+        // Read fresh state directly from the store after loading
+        const { habits: freshHabits, notificationTimes: freshTimes } = useHabitStore.getState()
+        scheduleHabitReminders(freshTimes, freshHabits)
       }
       refresh()
     }, [])
