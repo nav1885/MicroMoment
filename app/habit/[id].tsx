@@ -67,13 +67,6 @@ export default function HabitDetailScreen() {
     }, [])
   )
 
-  // Auto-enter edit mode when navigated with ?mode=edit
-  React.useEffect(() => {
-    if (mode === 'edit' && habit) {
-      enterEditMode()
-    }
-  }, [mode, habit?.id])
-
   const habit = habits.find((h) => h.id === id)
   const isCompletedToday = todayCompletions.some((c) => c.habit_id === id)
 
@@ -85,6 +78,13 @@ export default function HabitDetailScreen() {
     setEditTimeEstimate(habit.time_estimate_min)
     setEditMode(true)
   }
+
+  // Auto-enter edit mode when navigated with ?mode=edit
+  React.useEffect(() => {
+    if (mode === 'edit' && habit) {
+      enterEditMode()
+    }
+  }, [mode, habit?.id])
 
   const handleSave = async () => {
     if (!editName.trim()) {
