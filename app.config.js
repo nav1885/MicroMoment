@@ -1,6 +1,6 @@
 export default ({ config }) => ({
   ...config,
-  name: 'MicroMoment: 5-Min Habit Tracker',
+  name: 'MicroMoment',
   slug: 'micromoment',
   version: '1.0.0',
   orientation: 'portrait',
