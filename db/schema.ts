@@ -38,6 +38,10 @@ export async function initialiseDatabase(database: SQLite.SQLiteDatabase): Promi
     CREATE INDEX IF NOT EXISTS idx_completions_date ON completions(completed_date);
     CREATE INDEX IF NOT EXISTS idx_habits_active ON habits(is_active);
   `)
+
+  // Per-habit reminder columns — added after initial release, safe to run repeatedly
+  try { await database.execAsync('ALTER TABLE habits ADD COLUMN reminder_time TEXT') } catch {}
+  try { await database.execAsync('ALTER TABLE habits ADD COLUMN reminder_offset_min INTEGER') } catch {}
 }
 
 export function closeDatabase(): void {

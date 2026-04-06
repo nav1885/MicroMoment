@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  Modal,
 } from 'react-native'
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router'
 import { useHabitStore } from '../../store/habitStore'
@@ -36,6 +37,20 @@ const TIME_LABELS: Record<TimeOfDay, string> = {
   evening: '🌙 Evening',
 }
 
+const OFFSET_OPTIONS = [
+  { value: 0, label: 'At time' },
+  { value: 15, label: '15 min' },
+  { value: 30, label: '30 min' },
+  { value: 60, label: '1 hr' },
+  { value: 120, label: '2 hrs' },
+]
+
+function formatReminderLabel(time: string, offsetMin: number): string {
+  const opt = OFFSET_OPTIONS.find((o) => o.value === offsetMin)
+  const offsetLabel = opt && offsetMin > 0 ? ` · ${opt.label} before` : ''
+  return `${time}${offsetLabel}`
+}
+
 export default function HabitDetailScreen() {
   const { id, mode } = useLocalSearchParams<{ id: string; mode?: string }>()
   const colors = useThemeColors()
@@ -59,6 +74,12 @@ export default function HabitDetailScreen() {
   const [editEmoji, setEditEmoji] = useState('')
   const [editTimeOfDay, setEditTimeOfDay] = useState<TimeOfDay>('morning')
   const [editTimeEstimate, setEditTimeEstimate] = useState(5)
+  const [editReminderTime, setEditReminderTime] = useState<string | null>(null)
+  const [editReminderOffset, setEditReminderOffset] = useState(0)
+  const [showReminderModal, setShowReminderModal] = useState(false)
+  const [modalHour, setModalHour] = useState(8)
+  const [modalMinute, setModalMinute] = useState(0)
+  const [modalOffset, setModalOffset] = useState(0)
 
   useFocusEffect(
     useCallback(() => {
@@ -76,6 +97,8 @@ export default function HabitDetailScreen() {
     setEditEmoji(habit.emoji)
     setEditTimeOfDay(habit.time_of_day as TimeOfDay)
     setEditTimeEstimate(habit.time_estimate_min)
+    setEditReminderTime(habit.reminder_time ?? null)
+    setEditReminderOffset(habit.reminder_offset_min ?? 0)
     setEditMode(true)
   }
 
@@ -98,6 +121,8 @@ export default function HabitDetailScreen() {
         emoji: editEmoji,
         time_of_day: editTimeOfDay,
         time_estimate_min: editTimeEstimate,
+        reminder_time: editReminderTime,
+        reminder_offset_min: editReminderTime ? editReminderOffset : null,
       })
       setEditMode(false)
     } catch (err) {
@@ -184,21 +209,9 @@ export default function HabitDetailScreen() {
             <Text style={[styles.backText, { color: colors.primary }]}>← Back</Text>
           </Pressable>
           {editMode ? (
-            <View style={styles.headerActions}>
-              <Pressable onPress={() => setEditMode(false)} hitSlop={12}>
-                <Text style={[styles.headerBtnText, { color: colors.textSecondary }]}>Cancel</Text>
-              </Pressable>
-              <Pressable onPress={handleSave} disabled={saving} hitSlop={12}>
-                <Text
-                  style={[
-                    styles.headerBtnText,
-                    { color: saving ? colors.textSecondary : colors.primary },
-                  ]}
-                >
-                  Save
-                </Text>
-              </Pressable>
-            </View>
+            <Pressable onPress={() => setEditMode(false)} hitSlop={12}>
+              <Text style={[styles.headerBtnText, { color: colors.textSecondary }]}>Cancel</Text>
+            </Pressable>
           ) : (
             <Pressable
               onPress={enterEditMode}
@@ -362,6 +375,60 @@ export default function HabitDetailScreen() {
                 </View>
               </View>
 
+              {/* Reminder */}
+              <View style={styles.section}>
+                <Text style={[styles.sectionLabel, { color: colors.sectionHeader }]}>REMINDER</Text>
+                <Pressable
+                  onPress={() => {
+                    if (editReminderTime) {
+                      const [h, m] = editReminderTime.split(':').map(Number)
+                      setModalHour(h)
+                      setModalMinute(m)
+                    } else {
+                      setModalHour(8)
+                      setModalMinute(0)
+                    }
+                    setModalOffset(editReminderOffset)
+                    setShowReminderModal(true)
+                  }}
+                  style={[styles.reminderRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Set reminder"
+                >
+                  <Text style={[styles.reminderRowText, { color: editReminderTime ? colors.text : colors.textSecondary }]}>
+                    {editReminderTime ? formatReminderLabel(editReminderTime, editReminderOffset) : 'No reminder'}
+                  </Text>
+                  {editReminderTime ? (
+                    <Pressable
+                      onPress={() => { setEditReminderTime(null); setEditReminderOffset(0) }}
+                      hitSlop={12}
+                      accessibilityRole="button"
+                      accessibilityLabel="Clear reminder"
+                    >
+                      <Text style={[styles.reminderClear, { color: colors.textSecondary }]}>✕</Text>
+                    </Pressable>
+                  ) : (
+                    <Text style={[styles.reminderChevron, { color: colors.textSecondary }]}>›</Text>
+                  )}
+                </Pressable>
+              </View>
+
+              {/* Save button */}
+              <Pressable
+                onPress={handleSave}
+                disabled={saving}
+                style={[
+                  styles.saveBtn,
+                  { backgroundColor: saving ? colors.border : colors.primary },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Save changes"
+              >
+                <Text style={styles.saveBtnText}>
+                  {saving ? 'Saving…' : 'Save Changes'}
+                </Text>
+              </Pressable>
+
               {/* Danger zone */}
               <View style={[styles.dangerZone, { borderColor: colors.danger }]}>
                 <Text style={[styles.dangerTitle, { color: colors.danger }]}>Danger Zone</Text>
@@ -428,6 +495,87 @@ export default function HabitDetailScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Reminder modal */}
+      <Modal
+        visible={showReminderModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowReminderModal(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowReminderModal(false)}>
+          <Pressable
+            style={[styles.modalSheet, { backgroundColor: colors.cardBackground }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Reminder</Text>
+
+            <View style={styles.reminderTimeRow}>
+              <View style={styles.picker}>
+                <Pressable onPress={() => setModalHour((h) => (h + 1) % 24)} style={styles.pickerBtn}>
+                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▲</Text>
+                </Pressable>
+                <Text style={[styles.pickerValue, { color: colors.text }]}>{String(modalHour).padStart(2, '0')}</Text>
+                <Pressable onPress={() => setModalHour((h) => (h - 1 + 24) % 24)} style={styles.pickerBtn}>
+                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▼</Text>
+                </Pressable>
+              </View>
+              <Text style={[styles.timeSep, { color: colors.text }]}>:</Text>
+              <View style={styles.picker}>
+                <Pressable onPress={() => setModalMinute((m) => (m + 5) % 60)} style={styles.pickerBtn}>
+                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▲</Text>
+                </Pressable>
+                <Text style={[styles.pickerValue, { color: colors.text }]}>{String(modalMinute).padStart(2, '0')}</Text>
+                <Pressable onPress={() => setModalMinute((m) => (m - 5 + 60) % 60)} style={styles.pickerBtn}>
+                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▼</Text>
+                </Pressable>
+              </View>
+            </View>
+
+            <Text style={[styles.offsetLabel, { color: colors.sectionHeader }]}>REMIND ME</Text>
+            <View style={styles.offsetRow}>
+              {OFFSET_OPTIONS.map((opt) => (
+                <Pressable
+                  key={opt.value}
+                  onPress={() => setModalOffset(opt.value)}
+                  style={[
+                    styles.offsetPill,
+                    {
+                      backgroundColor: modalOffset === opt.value ? colors.primary : colors.surface,
+                      borderColor: modalOffset === opt.value ? colors.primary : colors.border,
+                    },
+                  ]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: modalOffset === opt.value }}
+                >
+                  <Text style={[styles.offsetPillText, { color: modalOffset === opt.value ? '#FFFFFF' : colors.text }]}>
+                    {opt.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <View style={styles.modalActions}>
+              <Pressable
+                onPress={() => setShowReminderModal(false)}
+                style={[styles.modalBtn, { borderColor: colors.border }]}
+              >
+                <Text style={[styles.modalBtnText, { color: colors.textSecondary }]}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setEditReminderTime(`${String(modalHour).padStart(2, '0')}:${String(modalMinute).padStart(2, '0')}`)
+                  setEditReminderOffset(modalOffset)
+                  setShowReminderModal(false)
+                }}
+                style={[styles.modalBtn, { borderColor: colors.primary, backgroundColor: colors.primary }]}
+              >
+                <Text style={[styles.modalBtnText, { color: '#FFFFFF' }]}>Set</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -508,6 +656,13 @@ const styles = StyleSheet.create({
   stepperBtn: { paddingHorizontal: 20, paddingVertical: 8 },
   stepperBtnText: { fontSize: 24, fontWeight: '300' },
   stepperValue: { fontSize: 17, fontWeight: '600' },
+  saveBtn: {
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  saveBtnText: { fontSize: 17, fontWeight: '600', color: '#FFFFFF' },
   dangerZone: {
     borderWidth: 1,
     borderRadius: 12,
@@ -523,4 +678,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dangerBtnText: { fontSize: 15, fontWeight: '500' },
+  // Reminder row
+  reminderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  reminderRowText: { fontSize: 16 },
+  reminderClear: { fontSize: 16, fontWeight: '500' },
+  reminderChevron: { fontSize: 20 },
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 24 },
+  reminderTimeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
+  picker: { alignItems: 'center' },
+  pickerBtn: { padding: 12 },
+  pickerArrow: { fontSize: 18 },
+  pickerValue: { fontSize: 48, fontWeight: '700', width: 80, textAlign: 'center' },
+  timeSep: { fontSize: 40, fontWeight: '300', marginHorizontal: 4, paddingBottom: 8 },
+  offsetLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 10 },
+  offsetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 28 },
+  offsetPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  offsetPillText: { fontSize: 13, fontWeight: '600' },
+  modalActions: { flexDirection: 'row', gap: 12 },
+  modalBtn: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  modalBtnText: { fontSize: 16, fontWeight: '600' },
 })

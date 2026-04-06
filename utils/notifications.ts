@@ -1,15 +1,6 @@
 import * as Notifications from 'expo-notifications'
 import { SchedulableTriggerInputTypes } from 'expo-notifications'
-import type { NotificationTimes } from '../store/habitStore'
 import type { Habit } from '../db/habits'
-
-type TimeGroup = 'morning' | 'afternoon' | 'evening'
-
-const NOTIFICATION_IDS: Record<TimeGroup, string> = {
-  morning: 'habit-reminder-morning',
-  afternoon: 'habit-reminder-afternoon',
-  evening: 'habit-reminder-evening',
-}
 
 // Set up how notifications are displayed while the app is foregrounded.
 Notifications.setNotificationHandler({
@@ -40,59 +31,46 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return status === 'granted'
 }
 
-/**
- * Cancel existing group reminders and schedule fresh ones based on the
- * current notification times and active habits list.
- *
- * Only groups with at least one active habit receive a notification.
- */
-export async function scheduleHabitReminders(
-  times: NotificationTimes,
-  habits: Habit[]
-): Promise<void> {
-  // Cancel all three group reminders first
-  await Promise.allSettled(
-    Object.values(NOTIFICATION_IDS).map((id) =>
-      Notifications.cancelScheduledNotificationAsync(id)
-    )
-  )
-
-  const groups: TimeGroup[] = ['morning', 'afternoon', 'evening']
-
-  for (const group of groups) {
-    const groupHabits = habits.filter((h) => h.time_of_day === group)
-    if (groupHabits.length === 0) continue
-
-    const [hourStr, minuteStr] = times[group].split(':')
-    const hour = parseInt(hourStr, 10)
-    const minute = parseInt(minuteStr, 10)
-
-    const body =
-      groupHabits.length === 1
-        ? `${groupHabits[0].emoji} ${groupHabits[0].name}`
-        : `${groupHabits.map((h) => h.emoji).join('')} ${groupHabits.length} habits ready`
-
-    await Notifications.scheduleNotificationAsync({
-      identifier: NOTIFICATION_IDS[group],
-      content: {
-        title: `Your ${group} micro-moment`,
-        body,
-        sound: true,
-      },
-      trigger: {
-        type: SchedulableTriggerInputTypes.DAILY,
-        hour,
-        minute,
-        channelId: 'habit-reminders',
-      },
-    })
-  }
+function notificationId(habitId: string): string {
+  return `habit-reminder-${habitId}`
 }
 
-export async function cancelAllHabitReminders(): Promise<void> {
-  await Promise.allSettled(
-    Object.values(NOTIFICATION_IDS).map((id) =>
-      Notifications.cancelScheduledNotificationAsync(id)
-    )
-  )
+export async function scheduleHabitNotification(habit: Habit): Promise<void> {
+  await Notifications.cancelScheduledNotificationAsync(notificationId(habit.id))
+
+  if (!habit.reminder_time) return
+
+  const [hourStr, minuteStr] = habit.reminder_time.split(':')
+  const totalMinutes = parseInt(hourStr, 10) * 60 + parseInt(minuteStr, 10) - (habit.reminder_offset_min ?? 0)
+  const clamped = Math.max(0, totalMinutes)
+  const hour = Math.floor(clamped / 60)
+  const minute = clamped % 60
+
+  const offsetLabel = habit.reminder_offset_min
+    ? ` (${habit.reminder_offset_min < 60 ? `${habit.reminder_offset_min} min` : `${habit.reminder_offset_min / 60} hr`} heads-up)`
+    : ''
+
+  await Notifications.scheduleNotificationAsync({
+    identifier: notificationId(habit.id),
+    content: {
+      title: `Time for your micro-moment${offsetLabel}`,
+      body: `${habit.emoji} ${habit.name}`,
+      sound: true,
+    },
+    trigger: {
+      type: SchedulableTriggerInputTypes.DAILY,
+      hour,
+      minute,
+      channelId: 'habit-reminders',
+    },
+  })
+}
+
+export async function cancelHabitNotification(habitId: string): Promise<void> {
+  await Notifications.cancelScheduledNotificationAsync(notificationId(habitId))
+}
+
+export async function rescheduleAllNotifications(habits: Habit[]): Promise<void> {
+  await Notifications.cancelAllScheduledNotificationsAsync()
+  await Promise.allSettled(habits.map(scheduleHabitNotification))
 }

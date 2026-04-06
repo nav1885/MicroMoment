@@ -10,6 +10,8 @@ export interface Habit {
   sort_order: number
   is_active: number
   created_at: string
+  reminder_time: string | null
+  reminder_offset_min: number | null
 }
 
 export interface CreateHabitInput {
@@ -17,6 +19,8 @@ export interface CreateHabitInput {
   emoji: string
   time_estimate_min: number
   time_of_day: 'morning' | 'afternoon' | 'evening'
+  reminder_time?: string | null
+  reminder_offset_min?: number | null
 }
 
 export async function insertHabit(input: CreateHabitInput, sortOrder: number): Promise<Habit> {
@@ -24,10 +28,13 @@ export async function insertHabit(input: CreateHabitInput, sortOrder: number): P
   const id = Crypto.randomUUID()
   const created_at = new Date().toISOString()
 
+  const reminderTime = input.reminder_time ?? null
+  const reminderOffsetMin = input.reminder_offset_min ?? null
+
   await db.runAsync(
-    `INSERT INTO habits (id, name, emoji, time_estimate_min, time_of_day, sort_order, is_active, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, 1, ?)`,
-    [id, input.name, input.emoji, input.time_estimate_min, input.time_of_day, sortOrder, created_at]
+    `INSERT INTO habits (id, name, emoji, time_estimate_min, time_of_day, sort_order, is_active, created_at, reminder_time, reminder_offset_min)
+     VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
+    [id, input.name, input.emoji, input.time_estimate_min, input.time_of_day, sortOrder, created_at, reminderTime, reminderOffsetMin]
   )
 
   return {
@@ -39,6 +46,8 @@ export async function insertHabit(input: CreateHabitInput, sortOrder: number): P
     sort_order: sortOrder,
     is_active: 1,
     created_at,
+    reminder_time: reminderTime,
+    reminder_offset_min: reminderOffsetMin,
   }
 }
 
@@ -51,6 +60,8 @@ export async function updateHabit(id: string, input: Partial<CreateHabitInput>):
   if (input.emoji !== undefined) { fields.push('emoji = ?'); values.push(input.emoji) }
   if (input.time_estimate_min !== undefined) { fields.push('time_estimate_min = ?'); values.push(input.time_estimate_min) }
   if (input.time_of_day !== undefined) { fields.push('time_of_day = ?'); values.push(input.time_of_day) }
+  if ('reminder_time' in input) { fields.push('reminder_time = ?'); values.push(input.reminder_time ?? null as any) }
+  if ('reminder_offset_min' in input) { fields.push('reminder_offset_min = ?'); values.push(input.reminder_offset_min ?? null as any) }
 
   if (fields.length === 0) return
   values.push(id)

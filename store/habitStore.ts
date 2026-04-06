@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   Habit,
   CreateHabitInput,
@@ -21,30 +20,18 @@ import {
   getCompletionsForHabit,
 } from '../db/completions'
 import { calculateStreak } from '../utils/streakCalculator'
+import {
+  scheduleHabitNotification,
+  cancelHabitNotification,
+} from '../utils/notifications'
 
 export const MAX_HABITS = 5
-const NOTIFY_MORNING_KEY = 'notify_morning'
-const NOTIFY_AFTERNOON_KEY = 'notify_afternoon'
-const NOTIFY_EVENING_KEY = 'notify_evening'
-
-export interface NotificationTimes {
-  morning: string
-  afternoon: string
-  evening: string
-}
-
-const DEFAULT_NOTIFICATION_TIMES: NotificationTimes = {
-  morning: '07:00',
-  afternoon: '12:00',
-  evening: '19:00',
-}
 
 export interface HabitStore {
   habits: Habit[]
   todayCompletions: Completion[]
   streaks: Record<string, number>
   isLoading: boolean
-  notificationTimes: NotificationTimes
 
   loadHabits: () => Promise<void>
   loadTodayCompletions: () => Promise<void>
@@ -57,8 +44,6 @@ export interface HabitStore {
   restoreHabit: (id: string) => Promise<void>
   reorderHabits: (orderedIds: string[]) => Promise<void>
   markComplete: (habitId: string, note?: string) => Promise<void>
-  loadNotificationTimes: () => Promise<void>
-  saveNotificationTimes: (times: Partial<NotificationTimes>) => Promise<void>
   getArchivedHabits: () => Promise<Habit[]>
 }
 
@@ -67,7 +52,6 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
   todayCompletions: [],
   streaks: {},
   isLoading: false,
-  notificationTimes: { ...DEFAULT_NOTIFICATION_TIMES },
 
   loadHabits: async () => {
     set({ isLoading: true })
@@ -133,6 +117,7 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
     const sortOrder = habits.length
     const newHabit = await insertHabit(input, sortOrder)
     set({ habits: [...habits, newHabit] })
+    scheduleHabitNotification(newHabit)
   },
 
   updateHabit: async (id: string, input: Partial<CreateHabitInput>) => {
@@ -144,6 +129,11 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
     }
 
     await updateHabit(id, input)
+    const { habits } = get()
+    const existing = habits.find((h) => h.id === id)
+    if (existing) {
+      scheduleHabitNotification({ ...existing, ...input } as Habit)
+    }
     set((state) => ({
       habits: state.habits.map((h) =>
         h.id === id ? { ...h, ...input } : h
@@ -153,6 +143,7 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
 
   deleteHabit: async (id: string) => {
     await deleteHabit(id)
+    cancelHabitNotification(id)
     set((state) => ({
       habits: state.habits.filter((h) => h.id !== id),
       todayCompletions: state.todayCompletions.filter((c) => c.habit_id !== id),
@@ -161,6 +152,7 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
 
   archiveHabit: async (id: string) => {
     await archiveHabit(id)
+    cancelHabitNotification(id)
     set((state) => ({
       habits: state.habits.filter((h) => h.id !== id),
       todayCompletions: state.todayCompletions.filter((c) => c.habit_id !== id),
@@ -202,44 +194,6 @@ export const useHabitStore = create<HabitStore>((set, get) => ({
     set((state) => ({
       todayCompletions: [...state.todayCompletions, completion],
     }))
-  },
-
-  loadNotificationTimes: async () => {
-    try {
-      const [morning, afternoon, evening] = await Promise.all([
-        AsyncStorage.getItem(NOTIFY_MORNING_KEY),
-        AsyncStorage.getItem(NOTIFY_AFTERNOON_KEY),
-        AsyncStorage.getItem(NOTIFY_EVENING_KEY),
-      ])
-      set({
-        notificationTimes: {
-          morning: morning ?? DEFAULT_NOTIFICATION_TIMES.morning,
-          afternoon: afternoon ?? DEFAULT_NOTIFICATION_TIMES.afternoon,
-          evening: evening ?? DEFAULT_NOTIFICATION_TIMES.evening,
-        },
-      })
-    } catch (err) {
-      console.error('[habitStore] loadNotificationTimes error:', err)
-    }
-  },
-
-  saveNotificationTimes: async (times: Partial<NotificationTimes>) => {
-    const current = get().notificationTimes
-    const updated = { ...current, ...times }
-
-    await Promise.all([
-      times.morning !== undefined
-        ? AsyncStorage.setItem(NOTIFY_MORNING_KEY, updated.morning)
-        : Promise.resolve(),
-      times.afternoon !== undefined
-        ? AsyncStorage.setItem(NOTIFY_AFTERNOON_KEY, updated.afternoon)
-        : Promise.resolve(),
-      times.evening !== undefined
-        ? AsyncStorage.setItem(NOTIFY_EVENING_KEY, updated.evening)
-        : Promise.resolve(),
-    ])
-
-    set({ notificationTimes: updated })
   },
 
   getArchivedHabits: async () => {

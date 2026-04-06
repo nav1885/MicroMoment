@@ -10,12 +10,27 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  Modal,
 } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 import { useHabitStore } from '../../store/habitStore'
 import { useThemeColors } from '../../hooks/useThemeColors'
 
 type TimeOfDay = 'morning' | 'afternoon' | 'evening'
+
+const OFFSET_OPTIONS = [
+  { value: 0, label: 'At time' },
+  { value: 15, label: '15 min' },
+  { value: 30, label: '30 min' },
+  { value: 60, label: '1 hr' },
+  { value: 120, label: '2 hrs' },
+]
+
+function formatReminderLabel(time: string, offsetMin: number): string {
+  const opt = OFFSET_OPTIONS.find((o) => o.value === offsetMin)
+  const offsetLabel = opt && offsetMin > 0 ? ` · ${opt.label} before` : ''
+  return `${time}${offsetLabel}`
+}
 
 const EMOJIS = [
   '🧘', '🏃', '💪', '🚶', '🏋️', '🤸', '🚴', '🏊', '⛹️', '🧗',
@@ -41,6 +56,14 @@ export default function NewHabitScreen() {
   const [timeEstimate, setTimeEstimate] = useState(5)
   const [saving, setSaving] = useState(false)
 
+  // Reminder state
+  const [reminderTime, setReminderTime] = useState<string | null>(null)
+  const [reminderOffset, setReminderOffset] = useState(0)
+  const [showReminderModal, setShowReminderModal] = useState(false)
+  const [editHour, setEditHour] = useState(8)
+  const [editMinute, setEditMinute] = useState(0)
+  const [editOffset, setEditOffset] = useState(0)
+
   const handleSave = async () => {
     if (!name.trim()) {
       Alert.alert('Name required', 'Give your habit a name.')
@@ -53,6 +76,8 @@ export default function NewHabitScreen() {
         emoji,
         time_of_day: timeOfDay,
         time_estimate_min: timeEstimate,
+        reminder_time: reminderTime,
+        reminder_offset_min: reminderTime ? reminderOffset : null,
       })
       router.back()
     } catch (err) {
@@ -80,17 +105,6 @@ export default function NewHabitScreen() {
               style={{ marginLeft: 4 }}
             >
               <Text style={{ color: colors.textSecondary, fontSize: 24 }}>✕</Text>
-            </Pressable>
-          ),
-          headerRight: () => (
-            <Pressable
-              onPress={handleSave}
-              disabled={saving}
-              hitSlop={12}
-              accessibilityRole="button"
-              accessibilityLabel="Save habit"
-            >
-              <Text style={{ color: saving ? colors.textSecondary : colors.primary, fontSize: 26 }}>✓</Text>
             </Pressable>
           ),
         }}
@@ -241,8 +255,140 @@ export default function NewHabitScreen() {
             </Text>
           </View>
 
+          {/* Reminder */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionLabel, { color: colors.sectionHeader }]}>REMINDER</Text>
+            <Pressable
+              onPress={() => {
+                if (reminderTime) {
+                  const [h, m] = reminderTime.split(':').map(Number)
+                  setEditHour(h)
+                  setEditMinute(m)
+                } else {
+                  setEditHour(8)
+                  setEditMinute(0)
+                }
+                setEditOffset(reminderOffset)
+                setShowReminderModal(true)
+              }}
+              style={[styles.reminderRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+              accessibilityRole="button"
+              accessibilityLabel="Set reminder"
+            >
+              <Text style={[styles.reminderRowText, { color: reminderTime ? colors.text : colors.textSecondary }]}>
+                {reminderTime ? formatReminderLabel(reminderTime, reminderOffset) : 'No reminder'}
+              </Text>
+              {reminderTime ? (
+                <Pressable
+                  onPress={() => { setReminderTime(null); setReminderOffset(0) }}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear reminder"
+                >
+                  <Text style={[styles.reminderClear, { color: colors.textSecondary }]}>✕</Text>
+                </Pressable>
+              ) : (
+                <Text style={[styles.reminderChevron, { color: colors.textSecondary }]}>›</Text>
+              )}
+            </Pressable>
+          </View>
+
+          {/* Save */}
+          <Pressable
+            onPress={handleSave}
+            disabled={saving}
+            style={[styles.saveBtn, { backgroundColor: saving ? colors.border : colors.primary }]}
+            accessibilityRole="button"
+            accessibilityLabel="Save habit"
+          >
+            <Text style={styles.saveBtnText}>{saving ? 'Saving…' : 'Save Habit'}</Text>
+          </Pressable>
+
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Reminder modal */}
+      <Modal
+        visible={showReminderModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowReminderModal(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowReminderModal(false)}>
+          <Pressable
+            style={[styles.modalSheet, { backgroundColor: colors.cardBackground }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Reminder</Text>
+
+            {/* Time picker */}
+            <View style={styles.reminderTimeRow}>
+              <View style={styles.picker}>
+                <Pressable onPress={() => setEditHour((h) => (h + 1) % 24)} style={styles.pickerBtn}>
+                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▲</Text>
+                </Pressable>
+                <Text style={[styles.pickerValue, { color: colors.text }]}>{String(editHour).padStart(2, '0')}</Text>
+                <Pressable onPress={() => setEditHour((h) => (h - 1 + 24) % 24)} style={styles.pickerBtn}>
+                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▼</Text>
+                </Pressable>
+              </View>
+              <Text style={[styles.timeSep, { color: colors.text }]}>:</Text>
+              <View style={styles.picker}>
+                <Pressable onPress={() => setEditMinute((m) => (m + 5) % 60)} style={styles.pickerBtn}>
+                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▲</Text>
+                </Pressable>
+                <Text style={[styles.pickerValue, { color: colors.text }]}>{String(editMinute).padStart(2, '0')}</Text>
+                <Pressable onPress={() => setEditMinute((m) => (m - 5 + 60) % 60)} style={styles.pickerBtn}>
+                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▼</Text>
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Offset pills */}
+            <Text style={[styles.offsetLabel, { color: colors.sectionHeader }]}>REMIND ME</Text>
+            <View style={styles.offsetRow}>
+              {OFFSET_OPTIONS.map((opt) => (
+                <Pressable
+                  key={opt.value}
+                  onPress={() => setEditOffset(opt.value)}
+                  style={[
+                    styles.offsetPill,
+                    {
+                      backgroundColor: editOffset === opt.value ? colors.primary : colors.surface,
+                      borderColor: editOffset === opt.value ? colors.primary : colors.border,
+                    },
+                  ]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: editOffset === opt.value }}
+                >
+                  <Text style={[styles.offsetPillText, { color: editOffset === opt.value ? '#FFFFFF' : colors.text }]}>
+                    {opt.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <View style={styles.modalActions}>
+              <Pressable
+                onPress={() => setShowReminderModal(false)}
+                style={[styles.modalBtn, { borderColor: colors.border }]}
+              >
+                <Text style={[styles.modalBtnText, { color: colors.textSecondary }]}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setReminderTime(`${String(editHour).padStart(2, '0')}:${String(editMinute).padStart(2, '0')}`)
+                  setReminderOffset(editOffset)
+                  setShowReminderModal(false)
+                }}
+                style={[styles.modalBtn, { borderColor: colors.primary, backgroundColor: colors.primary }]}
+              >
+                <Text style={[styles.modalBtnText, { color: '#FFFFFF' }]}>Set</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -301,4 +447,61 @@ const styles = StyleSheet.create({
   stepperBtnText: { fontSize: 24, fontWeight: '300' },
   stepperValue: { fontSize: 17, fontWeight: '600' },
   stepperHint: { fontSize: 12, marginTop: 8, textAlign: 'center' },
+  saveBtn: {
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  saveBtnText: { fontSize: 17, fontWeight: '600', color: '#FFFFFF' },
+  // Reminder row
+  reminderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  reminderRowText: { fontSize: 16 },
+  reminderClear: { fontSize: 16, fontWeight: '500' },
+  reminderChevron: { fontSize: 20 },
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 24 },
+  reminderTimeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
+  picker: { alignItems: 'center' },
+  pickerBtn: { padding: 12 },
+  pickerArrow: { fontSize: 18 },
+  pickerValue: { fontSize: 48, fontWeight: '700', width: 80, textAlign: 'center' },
+  timeSep: { fontSize: 40, fontWeight: '300', marginHorizontal: 4, paddingBottom: 8 },
+  offsetLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 10 },
+  offsetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 28 },
+  offsetPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  offsetPillText: { fontSize: 13, fontWeight: '600' },
+  modalActions: { flexDirection: 'row', gap: 12 },
+  modalBtn: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  modalBtnText: { fontSize: 16, fontWeight: '600' },
 })

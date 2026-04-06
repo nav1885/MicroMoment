@@ -1,36 +1,25 @@
 import {
   requestNotificationPermission,
-  scheduleHabitReminders,
-  cancelAllHabitReminders,
+  scheduleHabitNotification,
+  cancelHabitNotification,
+  rescheduleAllNotifications,
 } from '../../utils/notifications'
+import type { Habit } from '../../db/habits'
 
-const mockHabits = [
-  {
+function makeHabit(overrides: Partial<Habit> = {}): Habit {
+  return {
     id: 'h1',
     name: 'Morning stretch',
     emoji: '🧘',
-    time_of_day: 'morning' as const,
+    time_of_day: 'morning',
     time_estimate_min: 5,
     sort_order: 0,
     is_active: 1,
     created_at: '2026-01-01T00:00:00.000Z',
-  },
-  {
-    id: 'h2',
-    name: 'Evening read',
-    emoji: '📚',
-    time_of_day: 'evening' as const,
-    time_estimate_min: 5,
-    sort_order: 1,
-    is_active: 1,
-    created_at: '2026-01-01T00:00:00.000Z',
-  },
-]
-
-const mockTimes = {
-  morning: '07:00',
-  afternoon: '12:00',
-  evening: '19:00',
+    reminder_time: null,
+    reminder_offset_min: null,
+    ...overrides,
+  }
 }
 
 describe('requestNotificationPermission', () => {
@@ -40,29 +29,64 @@ describe('requestNotificationPermission', () => {
   })
 })
 
-describe('scheduleHabitReminders', () => {
-  test('resolves without error', async () => {
-    await expect(scheduleHabitReminders(mockTimes, mockHabits)).resolves.toBeUndefined()
+describe('scheduleHabitNotification', () => {
+  test('resolves without error for habit with no reminder', async () => {
+    await expect(scheduleHabitNotification(makeHabit())).resolves.toBeUndefined()
   })
 
-  test('does not schedule notifications for groups with no habits', async () => {
+  test('schedules a notification for habit with reminder_time', async () => {
     const { scheduleNotificationAsync } = require('expo-notifications')
     scheduleNotificationAsync.mockClear()
 
-    // Only morning and evening habits — afternoon group is empty
-    await scheduleHabitReminders(mockTimes, mockHabits)
+    await scheduleHabitNotification(makeHabit({ reminder_time: '08:00', reminder_offset_min: 0 }))
 
-    // Should have scheduled exactly 2 (morning + evening), not 3
-    expect(scheduleNotificationAsync).toHaveBeenCalledTimes(2)
+    expect(scheduleNotificationAsync).toHaveBeenCalledTimes(1)
   })
 
-  test('handles empty habits list gracefully', async () => {
-    await expect(scheduleHabitReminders(mockTimes, [])).resolves.toBeUndefined()
+  test('applies offset when scheduling', async () => {
+    const { scheduleNotificationAsync } = require('expo-notifications')
+    scheduleNotificationAsync.mockClear()
+
+    await scheduleHabitNotification(makeHabit({ reminder_time: '08:30', reminder_offset_min: 30 }))
+
+    const call = scheduleNotificationAsync.mock.calls[0][0]
+    expect(call.trigger.hour).toBe(8)
+    expect(call.trigger.minute).toBe(0)
+  })
+
+  test('clamps offset that would go below midnight', async () => {
+    const { scheduleNotificationAsync } = require('expo-notifications')
+    scheduleNotificationAsync.mockClear()
+
+    await scheduleHabitNotification(makeHabit({ reminder_time: '00:10', reminder_offset_min: 30 }))
+
+    const call = scheduleNotificationAsync.mock.calls[0][0]
+    expect(call.trigger.hour).toBe(0)
+    expect(call.trigger.minute).toBe(0)
   })
 })
 
-describe('cancelAllHabitReminders', () => {
+describe('cancelHabitNotification', () => {
   test('resolves without error', async () => {
-    await expect(cancelAllHabitReminders()).resolves.toBeUndefined()
+    await expect(cancelHabitNotification('h1')).resolves.toBeUndefined()
+  })
+})
+
+describe('rescheduleAllNotifications', () => {
+  test('resolves without error for empty list', async () => {
+    await expect(rescheduleAllNotifications([])).resolves.toBeUndefined()
+  })
+
+  test('only schedules habits with reminder_time set', async () => {
+    const { scheduleNotificationAsync } = require('expo-notifications')
+    scheduleNotificationAsync.mockClear()
+
+    const habits = [
+      makeHabit({ id: 'h1', reminder_time: '07:00', reminder_offset_min: 0 }),
+      makeHabit({ id: 'h2', reminder_time: null }),
+    ]
+    await rescheduleAllNotifications(habits)
+
+    expect(scheduleNotificationAsync).toHaveBeenCalledTimes(1)
   })
 })

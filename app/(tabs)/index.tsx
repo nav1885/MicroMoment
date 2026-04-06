@@ -19,7 +19,7 @@ import { CompletionRing } from '../../components/CompletionRing'
 import { HabitCard } from '../../components/HabitCard'
 import { DailyMessage } from '../../components/DailyMessage'
 import { useThemeColors } from '../../hooks/useThemeColors'
-import { scheduleHabitReminders } from '../../utils/notifications'
+
 import { AnimatedPressable } from '../../components/AnimatedPressable'
 import { trackHabitCompleted, trackStreakMilestone } from '../../utils/analytics'
 import type { Habit } from '../../db/habits'
@@ -42,11 +42,9 @@ export default function HomeScreen() {
     habits,
     todayCompletions,
     streaks,
-    notificationTimes,
     loadHabits,
     loadTodayCompletions,
     loadStreaks,
-    loadNotificationTimes,
     markComplete,
     getHabitStreak,
     reorderHabits,
@@ -55,16 +53,9 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      const refresh = async () => {
-        await loadHabits()
-        loadTodayCompletions()
-        loadStreaks()
-        await loadNotificationTimes()
-        // Read fresh state directly from the store after loading
-        const { habits: freshHabits, notificationTimes: freshTimes } = useHabitStore.getState()
-        scheduleHabitReminders(freshTimes, freshHabits)
-      }
-      refresh()
+      loadHabits()
+      loadTodayCompletions()
+      loadStreaks()
     }, [])
   )
 

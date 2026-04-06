@@ -4,7 +4,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { StatusBar } from 'expo-status-bar'
 import { useColorScheme } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { requestNotificationPermission, setupNotificationChannel } from '../utils/notifications'
+import { requestNotificationPermission, setupNotificationChannel, rescheduleAllNotifications } from '../utils/notifications'
+import { getAllActiveHabits } from '../db/habits'
 import { initAnalytics } from '../utils/analytics'
 
 const ONBOARDING_KEY = 'onboarding_complete'
@@ -25,7 +26,10 @@ export default function RootLayout() {
 
   useEffect(() => {
     initAnalytics()
-    setupNotificationChannel().then(() => requestNotificationPermission())
+    setupNotificationChannel()
+      .then(() => requestNotificationPermission())
+      .then(() => getAllActiveHabits())
+      .then(rescheduleAllNotifications)
   }, [])
 
   return (

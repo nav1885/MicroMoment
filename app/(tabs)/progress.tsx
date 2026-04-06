@@ -73,10 +73,28 @@ export default function ProgressScreen() {
   const activeDaysThisWeek = last7.filter((d) => (heatmapData.get(d) ?? 0) > 0).length
   const dayLetters = last7.map((d) => ['S', 'M', 'T', 'W', 'T', 'F', 'S'][new Date(d).getDay()])
 
-  // ── Heatmap grid ──
-  const gridDates = Array.from({ length: HEATMAP_DAYS }, (_, i) =>
-    localDateString(HEATMAP_DAYS - 1 - i)
-  )
+  // ── Heatmap grid (snapped to Monday) ──
+  // Find the most recent Monday on or before today
+  const todayForGrid = new Date()
+  const dayOfWeek = todayForGrid.getDay() // 0=Sun … 6=Sat
+  const daysSinceMonday = (dayOfWeek + 6) % 7 // 0=Mon … 6=Sun
+  const gridStart = new Date(todayForGrid)
+  gridStart.setDate(gridStart.getDate() - daysSinceMonday - 7 * 7) // 8 Mondays ago
+  gridStart.setHours(0, 0, 0, 0)
+
+  const gridDates = Array.from({ length: HEATMAP_DAYS }, (_, i) => {
+    const d = new Date(gridStart)
+    d.setDate(d.getDate() + i)
+    return d.toLocaleDateString('en-CA') // YYYY-MM-DD
+  })
+
+  // Label for the start of each week row
+  const weekLabels = Array.from({ length: HEATMAP_DAYS / 7 }, (_, week) => {
+    const d = new Date(gridStart)
+    d.setDate(d.getDate() + week * 7)
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  })
+
   const totalHabits = Math.max(habits.length, 1)
 
   const cellColor = (count: number): string => {
@@ -184,29 +202,24 @@ export default function ProgressScreen() {
           <View style={styles.heatmap}>
             {Array.from({ length: HEATMAP_DAYS / 7 }, (_, week) => (
               <View key={week} style={styles.heatRow}>
-                {Array.from({ length: 7 }, (_, day) => {
-                  const date = gridDates[week * 7 + day]
-                  const count = heatmapData.get(date) ?? 0
-                  return (
-                    <View
-                      key={date}
-                      style={[styles.heatCell, { backgroundColor: cellColor(count) }]}
-                      accessibilityLabel={`${date}: ${count} completion${count !== 1 ? 's' : ''}`}
-                    />
-                  )
-                })}
+                <Text style={[styles.weekLabel, { color: colors.textSecondary }]}>
+                  {weekLabels[week]}
+                </Text>
+                <View style={styles.heatCells}>
+                  {Array.from({ length: 7 }, (_, day) => {
+                    const date = gridDates[week * 7 + day]
+                    const count = heatmapData.get(date) ?? 0
+                    return (
+                      <View
+                        key={date}
+                        style={[styles.heatCell, { backgroundColor: cellColor(count) }]}
+                        accessibilityLabel={`${date}: ${count} completion${count !== 1 ? 's' : ''}`}
+                      />
+                    )
+                  })}
+                </View>
               </View>
             ))}
-          </View>
-          <View style={styles.heatLegend}>
-            <Text style={[styles.legendLabel, { color: colors.textSecondary }]}>Less</Text>
-            {[0, 0.3, 0.7, 1].map((ratio, i) => (
-              <View
-                key={i}
-                style={[styles.legendCell, { backgroundColor: cellColor(Math.round(ratio * totalHabits)) }]}
-              />
-            ))}
-            <Text style={[styles.legendLabel, { color: colors.textSecondary }]}>More</Text>
           </View>
         </View>
       </ScrollView>
@@ -258,18 +271,11 @@ const styles = StyleSheet.create({
   metaStat: { fontSize: 13, fontWeight: '500' },
   metaDot: { fontSize: 13 },
   // Heatmap
-  heatmap: { gap: 4 },
-  heatRow: { flexDirection: 'row', gap: 4 },
-  heatCell: { width: 36, height: 36, borderRadius: 6 },
-  heatLegend: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 8,
-    justifyContent: 'flex-end',
-  },
-  legendCell: { width: 16, height: 16, borderRadius: 3 },
-  legendLabel: { fontSize: 11 },
+  heatmap: { gap: 4, alignItems: 'center' },
+  heatRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  weekLabel: { fontSize: 11, fontWeight: '500', width: 44, textAlign: 'right' },
+  heatCells: { flexDirection: 'row', gap: 4 },
+  heatCell: { width: 32, height: 32, borderRadius: 6 },
   // Empty
   empty: { alignItems: 'center', paddingVertical: 32 },
   emptyText: { fontSize: 15, textAlign: 'center', lineHeight: 22 },

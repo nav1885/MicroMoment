@@ -51,6 +51,8 @@ function makeHabit(overrides: Partial<Habit> = {}): Habit {
     sort_order: 0,
     is_active: 1,
     created_at: '2026-01-01T00:00:00.000Z',
+    reminder_time: null,
+    reminder_offset_min: null,
     ...overrides,
   }
 }
@@ -62,7 +64,6 @@ beforeEach(() => {
     habits: [],
     todayCompletions: [],
     isLoading: false,
-    notificationTimes: { morning: '07:00', afternoon: '12:00', evening: '19:00' },
   })
   mockGetTodayCompletions.mockResolvedValue([])
   mockHasCompletionToday.mockResolvedValue(false)
@@ -206,18 +207,3 @@ describe('markComplete', () => {
   })
 })
 
-describe('notification times', () => {
-  it('loads defaults when AsyncStorage is empty', async () => {
-    await useHabitStore.getState().loadNotificationTimes()
-    expect(useHabitStore.getState().notificationTimes).toEqual({
-      morning: '07:00',
-      afternoon: '12:00',
-      evening: '19:00',
-    })
-  })
-
-  it('saves and retrieves custom notification times', async () => {
-    await useHabitStore.getState().saveNotificationTimes({ morning: '06:30' })
-    expect(useHabitStore.getState().notificationTimes.morning).toBe('06:30')
-  })
-})
