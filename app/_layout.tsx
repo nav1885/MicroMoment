@@ -4,6 +4,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { StatusBar } from 'expo-status-bar'
 import { useColorScheme } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useFonts } from 'expo-font'
+import { Ionicons } from '@expo/vector-icons'
 import { requestNotificationPermission, setupNotificationChannel, rescheduleAllNotifications } from '../utils/notifications'
 import { getAllActiveHabits } from '../db/habits'
 import { initAnalytics } from '../utils/analytics'
@@ -14,6 +16,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme()
   const router = useRouter()
   const rootState = useRootNavigationState()
+  const [fontsLoaded] = useFonts(Ionicons.font)
 
   useEffect(() => {
     if (!rootState?.key) return
@@ -31,6 +34,8 @@ export default function RootLayout() {
       .then(() => getAllActiveHabits())
       .then(rescheduleAllNotifications)
   }, [])
+
+  if (!fontsLoaded) return null
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

@@ -1,5 +1,6 @@
 import React, { useRef } from 'react'
 import { View, Text, StyleSheet, Pressable, TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -10,12 +11,6 @@ import { useRouter } from 'expo-router'
 import { CheckButton } from './CheckButton'
 import { useThemeColors } from '../hooks/useThemeColors'
 import type { Habit } from '../db/habits'
-
-const TIME_BADGES: Record<string, string> = {
-  morning: '🌅',
-  afternoon: '☀️',
-  evening: '🌙',
-}
 
 interface HabitCardProps {
   habit: Habit
@@ -90,36 +85,49 @@ export function HabitCard({ habit, completed, streak, onComplete, onEdit, onDele
             style={[
               styles.card,
               {
-                backgroundColor: completed ? colors.completedCard : colors.cardBackground,
-                borderColor: colors.border,
+                backgroundColor: colors.cardBackground,
+                borderLeftColor: completed ? 'transparent' : colors.primary,
+                shadowColor: colors.text,
               },
             ]}
           >
-            <View style={styles.left}>
+            {/* Emoji pill */}
+            <View style={[styles.emojiWrap, { backgroundColor: colors.primary + '18' }]}>
               <Text style={styles.emoji}>{habit.emoji}</Text>
-              <View style={styles.info}>
-                <Text
-                  style={[
-                    styles.name,
-                    { color: completed ? colors.completedText : colors.text },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {habit.name}
+            </View>
+
+            {/* Name + meta */}
+            <View style={styles.info}>
+              <Text
+                style={[
+                  styles.name,
+                  {
+                    color: completed ? colors.completedText : colors.text,
+                    textDecorationLine: completed ? 'line-through' : 'none',
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {habit.name}
+              </Text>
+              <View style={styles.meta}>
+                <Text style={[styles.duration, { color: colors.textSecondary }]}>
+                  {habit.time_estimate_min} min
                 </Text>
-                <View style={styles.meta}>
-                  <Text style={[styles.duration, { color: colors.textSecondary }]}>
-                    {habit.time_estimate_min} min
-                  </Text>
-                  {streak !== undefined && streak >= 2 && (
-                    <Text style={[styles.streak, { color: colors.primary }]}>
-                      {' '}· 🔥 {streak}
+                {streak !== undefined && streak >= 2 && (
+                  <View style={[styles.streakBadge, { backgroundColor: colors.streak + '20' }]}>
+                    <Text style={[styles.streakText, { color: colors.streak }]}>
+                      🔥 {streak}
                     </Text>
-                  )}
-                </View>
+                  </View>
+                )}
               </View>
             </View>
+
+            {/* Check button */}
             <CheckButton completed={completed} onPress={onComplete} />
+
+            {/* Drag handle */}
             {drag && (
               <TouchableOpacity
                 onLongPress={drag}
@@ -128,7 +136,7 @@ export function HabitCard({ habit, completed, streak, onComplete, onEdit, onDele
                 hitSlop={8}
                 accessibilityLabel="Hold to drag and reorder"
               >
-                <Text style={[styles.dragIcon, { color: colors.textSecondary }]}>≡</Text>
+                <Ionicons name="reorder-two" size={20} color={colors.border} />
               </TouchableOpacity>
             )}
           </View>
@@ -142,39 +150,52 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 8,
+    borderRadius: 16,
+    borderLeftWidth: 3,
+    marginBottom: 10,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  left: {
-    flexDirection: 'row',
+  emojiWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: 'center',
-    flex: 1,
+    justifyContent: 'center',
     marginRight: 12,
   },
   emoji: {
-    fontSize: 24,
-    marginRight: 12,
+    fontSize: 22,
   },
   info: {
     flex: 1,
+    marginRight: 12,
   },
   name: {
     fontSize: 16,
     fontWeight: '600',
+    marginBottom: 4,
   },
   meta: {
     flexDirection: 'row',
-    marginTop: 2,
+    alignItems: 'center',
+    gap: 8,
   },
   duration: {
     fontSize: 13,
+    fontWeight: '400',
   },
-  streak: {
-    fontSize: 13,
+  streakBadge: {
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  streakText: {
+    fontSize: 12,
     fontWeight: '600',
   },
   dragHandle: {
@@ -182,20 +203,15 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     justifyContent: 'center',
   },
-  dragIcon: {
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
   swipeActions: {
     flexDirection: 'row',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   swipeBtn: {
     justifyContent: 'center',
     alignItems: 'center',
     width: 80,
-    borderRadius: 12,
+    borderRadius: 16,
     marginLeft: 6,
   },
   swipeBtnText: {

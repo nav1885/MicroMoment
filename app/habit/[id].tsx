@@ -12,9 +12,11 @@ import {
   SafeAreaView,
   Modal,
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router'
 import { useHabitStore } from '../../store/habitStore'
 import { useThemeColors } from '../../hooks/useThemeColors'
+import { Button } from '../../components/Button'
 
 type TimeOfDay = 'morning' | 'afternoon' | 'evening'
 
@@ -177,11 +179,12 @@ export default function HabitDetailScreen() {
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
         <Pressable
           onPress={() => router.back()}
-          style={styles.backBtn}
+          style={[styles.headerBack, { padding: 20 }]}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Text style={[styles.backText, { color: colors.primary }]}>← Back</Text>
+          <Ionicons name="chevron-back" size={22} color={colors.primary} />
+          <Text style={[styles.backText, { color: colors.primary }]}>Back</Text>
         </Pressable>
         <View style={styles.notFound}>
           <Text style={[styles.notFoundText, { color: colors.textSecondary }]}>
@@ -200,17 +203,34 @@ export default function HabitDetailScreen() {
       >
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Text style={[styles.backText, { color: colors.primary }]}>← Back</Text>
-          </Pressable>
           {editMode ? (
-            <Pressable onPress={() => setEditMode(false)} hitSlop={12}>
+            <Pressable onPress={() => setEditMode(false)} hitSlop={12} accessibilityRole="button" accessibilityLabel="Cancel edit">
               <Text style={[styles.headerBtnText, { color: colors.textSecondary }]}>Cancel</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => router.back()}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              style={styles.headerBack}
+            >
+              <Ionicons name="chevron-back" size={22} color={colors.primary} />
+              <Text style={[styles.backText, { color: colors.primary }]}>Back</Text>
+            </Pressable>
+          )}
+          {editMode ? (
+            <Pressable
+              onPress={handleSave}
+              disabled={saving}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Save changes"
+              style={{ opacity: saving ? 0.5 : 1 }}
+            >
+              <Text style={[styles.headerBtnText, { color: colors.primary }]}>
+                {saving ? 'Saving…' : 'Save'}
+              </Text>
             </Pressable>
           ) : (
             <Pressable
@@ -405,53 +425,29 @@ export default function HabitDetailScreen() {
                       accessibilityRole="button"
                       accessibilityLabel="Clear reminder"
                     >
-                      <Text style={[styles.reminderClear, { color: colors.textSecondary }]}>✕</Text>
+                      <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
                     </Pressable>
                   ) : (
-                    <Text style={[styles.reminderChevron, { color: colors.textSecondary }]}>›</Text>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
                   )}
                 </Pressable>
               </View>
 
-              {/* Save button */}
-              <Pressable
-                onPress={handleSave}
-                disabled={saving}
-                style={[
-                  styles.saveBtn,
-                  { backgroundColor: saving ? colors.border : colors.primary },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Save changes"
-              >
-                <Text style={styles.saveBtnText}>
-                  {saving ? 'Saving…' : 'Save Changes'}
-                </Text>
-              </Pressable>
-
               {/* Danger zone */}
-              <View style={[styles.dangerZone, { borderColor: colors.danger }]}>
-                <Text style={[styles.dangerTitle, { color: colors.danger }]}>Danger Zone</Text>
-                <Pressable
+              <View style={[styles.dangerZone, { borderColor: colors.border }]}>
+                <Text style={[styles.dangerTitle, { color: colors.textSecondary }]}>Danger Zone</Text>
+                <Button
+                  label="Archive Habit"
+                  variant="secondary"
                   onPress={handleArchive}
-                  style={[styles.dangerBtn, { borderColor: colors.border }]}
-                  accessibilityRole="button"
                   accessibilityLabel="Archive habit"
-                >
-                  <Text style={[styles.dangerBtnText, { color: colors.text }]}>
-                    Archive Habit
-                  </Text>
-                </Pressable>
-                <Pressable
+                />
+                <Button
+                  label="Delete Habit"
+                  variant="danger"
                   onPress={handleDelete}
-                  style={[styles.dangerBtn, { borderColor: colors.danger }]}
-                  accessibilityRole="button"
                   accessibilityLabel="Delete habit"
-                >
-                  <Text style={[styles.dangerBtnText, { color: colors.danger }]}>
-                    Delete Habit
-                  </Text>
-                </Pressable>
+                />
               </View>
             </>
           ) : (
@@ -466,31 +462,14 @@ export default function HabitDetailScreen() {
               </View>
 
               {/* Mark complete */}
-              <Pressable
+              <Button
+                label={isCompletedToday ? 'Completed Today' : 'Mark Complete'}
+                variant={isCompletedToday ? 'secondary' : 'primary'}
                 onPress={handleMarkComplete}
                 disabled={isCompletedToday}
-                style={[
-                  styles.completeBtn,
-                  {
-                    backgroundColor: isCompletedToday ? colors.completedCard : colors.primary,
-                    borderColor: isCompletedToday ? colors.border : colors.primary,
-                  },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  isCompletedToday ? 'Completed today' : 'Mark habit complete'
-                }
-                accessibilityState={{ disabled: isCompletedToday }}
-              >
-                <Text
-                  style={[
-                    styles.completeBtnText,
-                    { color: isCompletedToday ? colors.completedText : '#FFFFFF' },
-                  ]}
-                >
-                  {isCompletedToday ? '✓ Completed Today' : 'Mark Complete'}
-                </Text>
-              </Pressable>
+                style={styles.completeBtn}
+                accessibilityLabel={isCompletedToday ? 'Completed today' : 'Mark habit complete'}
+              />
             </>
           )}
         </ScrollView>
@@ -513,21 +492,21 @@ export default function HabitDetailScreen() {
             <View style={styles.reminderTimeRow}>
               <View style={styles.picker}>
                 <Pressable onPress={() => setModalHour((h) => (h + 1) % 24)} style={styles.pickerBtn}>
-                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▲</Text>
+                  <Ionicons name="chevron-up" size={22} color={colors.primary} />
                 </Pressable>
                 <Text style={[styles.pickerValue, { color: colors.text }]}>{String(modalHour).padStart(2, '0')}</Text>
                 <Pressable onPress={() => setModalHour((h) => (h - 1 + 24) % 24)} style={styles.pickerBtn}>
-                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▼</Text>
+                  <Ionicons name="chevron-down" size={22} color={colors.primary} />
                 </Pressable>
               </View>
               <Text style={[styles.timeSep, { color: colors.text }]}>:</Text>
               <View style={styles.picker}>
                 <Pressable onPress={() => setModalMinute((m) => (m + 5) % 60)} style={styles.pickerBtn}>
-                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▲</Text>
+                  <Ionicons name="chevron-up" size={22} color={colors.primary} />
                 </Pressable>
                 <Text style={[styles.pickerValue, { color: colors.text }]}>{String(modalMinute).padStart(2, '0')}</Text>
                 <Pressable onPress={() => setModalMinute((m) => (m - 5 + 60) % 60)} style={styles.pickerBtn}>
-                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▼</Text>
+                  <Ionicons name="chevron-down" size={22} color={colors.primary} />
                 </Pressable>
               </View>
             </View>
@@ -556,22 +535,22 @@ export default function HabitDetailScreen() {
             </View>
 
             <View style={styles.modalActions}>
-              <Pressable
+              <Button
+                label="Cancel"
+                variant="secondary"
                 onPress={() => setShowReminderModal(false)}
-                style={[styles.modalBtn, { borderColor: colors.border }]}
-              >
-                <Text style={[styles.modalBtnText, { color: colors.textSecondary }]}>Cancel</Text>
-              </Pressable>
-              <Pressable
+                style={styles.modalBtn}
+              />
+              <Button
+                label="Set Reminder"
+                variant="primary"
                 onPress={() => {
                   setEditReminderTime(`${String(modalHour).padStart(2, '0')}:${String(modalMinute).padStart(2, '0')}`)
                   setEditReminderOffset(modalOffset)
                   setShowReminderModal(false)
                 }}
-                style={[styles.modalBtn, { borderColor: colors.primary, backgroundColor: colors.primary }]}
-              >
-                <Text style={[styles.modalBtnText, { color: '#FFFFFF' }]}>Set</Text>
-              </Pressable>
+                style={styles.modalBtn}
+              />
             </View>
           </Pressable>
         </Pressable>
@@ -591,10 +570,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  headerActions: { flexDirection: 'row', gap: 16 },
+  headerBack: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   headerBtnText: { fontSize: 16, fontWeight: '600' },
-  backBtn: { padding: 20 },
-  backText: { fontSize: 16 },
+  backText: { fontSize: 16, fontWeight: '500' },
   scroll: { flex: 1 },
   content: { padding: 20, paddingBottom: 48 },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -604,14 +582,7 @@ const styles = StyleSheet.create({
   heroEmoji: { fontSize: 64, marginBottom: 12 },
   heroName: { fontSize: 24, fontWeight: '700', marginBottom: 6, textAlign: 'center' },
   heroMeta: { fontSize: 15 },
-  completeBtn: {
-    borderRadius: 12,
-    borderWidth: 1.5,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  completeBtnText: { fontSize: 17, fontWeight: '600' },
+  completeBtn: { marginTop: 8 },
   // Edit form
   section: { marginBottom: 28 },
   sectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 10 },
@@ -628,17 +599,17 @@ const styles = StyleSheet.create({
   emojiOptionText: { fontSize: 22 },
   input: {
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 16,
   },
   timeRow: { flexDirection: 'row', gap: 10 },
   timePill: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: 14,
+    borderRadius: 14,
     borderWidth: 1.5,
     gap: 4,
   },
@@ -649,48 +620,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 14,
     paddingHorizontal: 4,
     paddingVertical: 4,
   },
-  stepperBtn: { paddingHorizontal: 20, paddingVertical: 8 },
-  stepperBtnText: { fontSize: 24, fontWeight: '300' },
+  stepperBtn: { paddingHorizontal: 24, paddingVertical: 10 },
+  stepperBtnText: { fontSize: 26, fontWeight: '300' },
   stepperValue: { fontSize: 17, fontWeight: '600' },
-  saveBtn: {
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  saveBtnText: { fontSize: 17, fontWeight: '600', color: '#FFFFFF' },
+  saveBtn: { marginBottom: 16 },
   dangerZone: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     gap: 10,
     marginTop: 8,
   },
-  dangerTitle: { fontSize: 13, fontWeight: '700', marginBottom: 4 },
-  dangerBtn: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  dangerBtnText: { fontSize: 15, fontWeight: '500' },
+  dangerTitle: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5, marginBottom: 4 },
   // Reminder row
   reminderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
+    borderRadius: 14,
+    paddingHorizontal: 16,
     paddingVertical: 14,
   },
   reminderRowText: { fontSize: 16 },
-  reminderClear: { fontSize: 16, fontWeight: '500' },
-  reminderChevron: { fontSize: 20 },
   // Modal
   modalOverlay: {
     flex: 1,
@@ -701,17 +657,16 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 24,
-    paddingBottom: 40,
+    paddingBottom: 32,
   },
-  modalTitle: { fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 24 },
-  reminderTimeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
+  modalTitle: { fontSize: 17, fontWeight: '700', textAlign: 'center', marginBottom: 20 },
+  reminderTimeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   picker: { alignItems: 'center' },
-  pickerBtn: { padding: 12 },
-  pickerArrow: { fontSize: 18 },
-  pickerValue: { fontSize: 48, fontWeight: '700', width: 80, textAlign: 'center' },
-  timeSep: { fontSize: 40, fontWeight: '300', marginHorizontal: 4, paddingBottom: 8 },
+  pickerBtn: { padding: 8 },
+  pickerValue: { fontSize: 36, fontWeight: '700', width: 64, textAlign: 'center' },
+  timeSep: { fontSize: 30, fontWeight: '300', marginHorizontal: 4, paddingBottom: 4 },
   offsetLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 10 },
-  offsetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 28 },
+  offsetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
   offsetPill: {
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -720,12 +675,5 @@ const styles = StyleSheet.create({
   },
   offsetPillText: { fontSize: 13, fontWeight: '600' },
   modalActions: { flexDirection: 'row', gap: 12 },
-  modalBtn: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  modalBtnText: { fontSize: 16, fontWeight: '600' },
+  modalBtn: { flex: 1 },
 })

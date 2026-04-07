@@ -1,0 +1,7 @@
+appId: com.nav1885.micromoment
+---
+# Tap through 3 onboarding slides then land on Today tab
+- tapOn: "Next"
+- tapOn: "Next"
+- tapOn: "Get Started"
+- assertVisible: "Today"

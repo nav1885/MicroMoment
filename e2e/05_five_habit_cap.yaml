@@ -1,0 +1,33 @@
+appId: com.nav1885.micromoment
+---
+- launchApp:
+    clearState: true
+- runFlow: _skip_onboarding.yaml
+
+- runFlow:
+    file: _add_one_habit.yaml
+    env:
+      HABIT_NAME: "Habit One"
+- runFlow:
+    file: _add_one_habit.yaml
+    env:
+      HABIT_NAME: "Habit Two"
+- runFlow:
+    file: _add_one_habit.yaml
+    env:
+      HABIT_NAME: "Habit Three"
+- runFlow:
+    file: _add_one_habit.yaml
+    env:
+      HABIT_NAME: "Habit Four"
+- runFlow:
+    file: _add_one_habit.yaml
+    env:
+      HABIT_NAME: "Habit Five"
+
+# Cap banner should appear
+- assertVisible: "You've reached 5 habits"
+
+# Tapping Add Habit should NOT open the form
+- tapOn: "Add Habit"
+- assertNotVisible: "New Habit"

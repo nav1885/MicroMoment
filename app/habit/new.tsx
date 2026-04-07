@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback, useLayoutEffect } from 'react'
 import {
   View,
   Text,
@@ -12,9 +12,11 @@ import {
   SafeAreaView,
   Modal,
 } from 'react-native'
-import { Stack, useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+import { Stack, useRouter, useNavigation } from 'expo-router'
 import { useHabitStore } from '../../store/habitStore'
 import { useThemeColors } from '../../hooks/useThemeColors'
+import { Button } from '../../components/Button'
 
 type TimeOfDay = 'morning' | 'afternoon' | 'evening'
 
@@ -48,6 +50,7 @@ const TIME_OPTIONS: { key: TimeOfDay; label: string; icon: string }[] = [
 export default function NewHabitScreen() {
   const colors = useThemeColors()
   const router = useRouter()
+  const navigation = useNavigation()
   const { createHabit } = useHabitStore()
 
   const [name, setName] = useState('')
@@ -64,7 +67,7 @@ export default function NewHabitScreen() {
   const [editMinute, setEditMinute] = useState(0)
   const [editOffset, setEditOffset] = useState(0)
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!name.trim()) {
       Alert.alert('Name required', 'Give your habit a name.')
       return
@@ -84,7 +87,27 @@ export default function NewHabitScreen() {
       setSaving(false)
       Alert.alert('Could not save', err instanceof Error ? err.message : 'Unknown error')
     }
-  }
+  }, [name, emoji, timeOfDay, timeEstimate, reminderTime, reminderOffset, createHabit, router])
+
+  // Keep header button fresh — useLayoutEffect ensures it updates before paint
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Pressable
+          onPress={handleSave}
+          disabled={saving}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Save habit"
+          style={{ marginRight: 4, opacity: saving ? 0.5 : 1 }}
+        >
+          <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '700' }}>
+            {saving ? 'Saving…' : 'Save'}
+          </Text>
+        </Pressable>
+      ),
+    })
+  }, [handleSave, saving, colors])
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
@@ -104,7 +127,7 @@ export default function NewHabitScreen() {
               accessibilityLabel="Cancel"
               style={{ marginLeft: 4 }}
             >
-              <Text style={{ color: colors.textSecondary, fontSize: 24 }}>✕</Text>
+              <Ionicons name="close" size={24} color={colors.textSecondary} />
             </Pressable>
           ),
         }}
@@ -285,24 +308,14 @@ export default function NewHabitScreen() {
                   accessibilityRole="button"
                   accessibilityLabel="Clear reminder"
                 >
-                  <Text style={[styles.reminderClear, { color: colors.textSecondary }]}>✕</Text>
+                  <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
                 </Pressable>
               ) : (
-                <Text style={[styles.reminderChevron, { color: colors.textSecondary }]}>›</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
               )}
             </Pressable>
           </View>
 
-          {/* Save */}
-          <Pressable
-            onPress={handleSave}
-            disabled={saving}
-            style={[styles.saveBtn, { backgroundColor: saving ? colors.border : colors.primary }]}
-            accessibilityRole="button"
-            accessibilityLabel="Save habit"
-          >
-            <Text style={styles.saveBtnText}>{saving ? 'Saving…' : 'Save Habit'}</Text>
-          </Pressable>
 
         </ScrollView>
       </KeyboardAvoidingView>
@@ -319,33 +332,33 @@ export default function NewHabitScreen() {
             style={[styles.modalSheet, { backgroundColor: colors.cardBackground }]}
             onPress={(e) => e.stopPropagation()}
           >
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Reminder</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Set Reminder</Text>
 
             {/* Time picker */}
             <View style={styles.reminderTimeRow}>
               <View style={styles.picker}>
                 <Pressable onPress={() => setEditHour((h) => (h + 1) % 24)} style={styles.pickerBtn}>
-                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▲</Text>
+                  <Ionicons name="chevron-up" size={22} color={colors.primary} />
                 </Pressable>
                 <Text style={[styles.pickerValue, { color: colors.text }]}>{String(editHour).padStart(2, '0')}</Text>
                 <Pressable onPress={() => setEditHour((h) => (h - 1 + 24) % 24)} style={styles.pickerBtn}>
-                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▼</Text>
+                  <Ionicons name="chevron-down" size={22} color={colors.primary} />
                 </Pressable>
               </View>
               <Text style={[styles.timeSep, { color: colors.text }]}>:</Text>
               <View style={styles.picker}>
                 <Pressable onPress={() => setEditMinute((m) => (m + 5) % 60)} style={styles.pickerBtn}>
-                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▲</Text>
+                  <Ionicons name="chevron-up" size={22} color={colors.primary} />
                 </Pressable>
                 <Text style={[styles.pickerValue, { color: colors.text }]}>{String(editMinute).padStart(2, '0')}</Text>
                 <Pressable onPress={() => setEditMinute((m) => (m - 5 + 60) % 60)} style={styles.pickerBtn}>
-                  <Text style={[styles.pickerArrow, { color: colors.primary }]}>▼</Text>
+                  <Ionicons name="chevron-down" size={22} color={colors.primary} />
                 </Pressable>
               </View>
             </View>
 
             {/* Offset pills */}
-            <Text style={[styles.offsetLabel, { color: colors.sectionHeader }]}>REMIND ME</Text>
+            <Text style={[styles.offsetLabel, { color: colors.sectionHeader }]}>NOTIFY ME</Text>
             <View style={styles.offsetRow}>
               {OFFSET_OPTIONS.map((opt) => (
                 <Pressable
@@ -368,23 +381,24 @@ export default function NewHabitScreen() {
               ))}
             </View>
 
+            {/* Pinned action buttons */}
             <View style={styles.modalActions}>
-              <Pressable
+              <Button
+                label="Cancel"
+                variant="secondary"
                 onPress={() => setShowReminderModal(false)}
-                style={[styles.modalBtn, { borderColor: colors.border }]}
-              >
-                <Text style={[styles.modalBtnText, { color: colors.textSecondary }]}>Cancel</Text>
-              </Pressable>
-              <Pressable
+                style={styles.modalBtn}
+              />
+              <Button
+                label="Set Reminder"
+                variant="primary"
                 onPress={() => {
                   setReminderTime(`${String(editHour).padStart(2, '0')}:${String(editMinute).padStart(2, '0')}`)
                   setReminderOffset(editOffset)
                   setShowReminderModal(false)
                 }}
-                style={[styles.modalBtn, { borderColor: colors.primary, backgroundColor: colors.primary }]}
-              >
-                <Text style={[styles.modalBtnText, { color: '#FFFFFF' }]}>Set</Text>
-              </Pressable>
+                style={styles.modalBtn}
+              />
             </View>
           </Pressable>
         </Pressable>
@@ -418,17 +432,17 @@ const styles = StyleSheet.create({
   emojiOptionText: { fontSize: 22 },
   input: {
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 16,
   },
   timeRow: { flexDirection: 'row', gap: 10 },
   timePill: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: 14,
+    borderRadius: 14,
     borderWidth: 1.5,
     gap: 4,
   },
@@ -439,34 +453,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 14,
     paddingHorizontal: 4,
     paddingVertical: 4,
   },
-  stepperBtn: { paddingHorizontal: 20, paddingVertical: 8 },
-  stepperBtnText: { fontSize: 24, fontWeight: '300' },
+  stepperBtn: { paddingHorizontal: 24, paddingVertical: 10 },
+  stepperBtnText: { fontSize: 26, fontWeight: '300' },
   stepperValue: { fontSize: 17, fontWeight: '600' },
   stepperHint: { fontSize: 12, marginTop: 8, textAlign: 'center' },
-  saveBtn: {
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  saveBtnText: { fontSize: 17, fontWeight: '600', color: '#FFFFFF' },
+  saveBtn: { marginTop: 8 },
   // Reminder row
   reminderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
+    borderRadius: 14,
+    paddingHorizontal: 16,
     paddingVertical: 14,
   },
   reminderRowText: { fontSize: 16 },
-  reminderClear: { fontSize: 16, fontWeight: '500' },
-  reminderChevron: { fontSize: 20 },
   // Modal
   modalOverlay: {
     flex: 1,
@@ -477,17 +483,16 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 24,
-    paddingBottom: 40,
+    paddingBottom: 32,
   },
-  modalTitle: { fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 24 },
-  reminderTimeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
+  modalTitle: { fontSize: 17, fontWeight: '700', textAlign: 'center', marginBottom: 20 },
+  reminderTimeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   picker: { alignItems: 'center' },
-  pickerBtn: { padding: 12 },
-  pickerArrow: { fontSize: 18 },
-  pickerValue: { fontSize: 48, fontWeight: '700', width: 80, textAlign: 'center' },
-  timeSep: { fontSize: 40, fontWeight: '300', marginHorizontal: 4, paddingBottom: 8 },
+  pickerBtn: { padding: 8 },
+  pickerValue: { fontSize: 36, fontWeight: '700', width: 64, textAlign: 'center' },
+  timeSep: { fontSize: 30, fontWeight: '300', marginHorizontal: 4, paddingBottom: 4 },
   offsetLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 10 },
-  offsetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 28 },
+  offsetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
   offsetPill: {
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -496,12 +501,5 @@ const styles = StyleSheet.create({
   },
   offsetPillText: { fontSize: 13, fontWeight: '600' },
   modalActions: { flexDirection: 'row', gap: 12 },
-  modalBtn: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  modalBtnText: { fontSize: 16, fontWeight: '600' },
+  modalBtn: { flex: 1 },
 })

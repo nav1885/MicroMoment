@@ -1,0 +1,33 @@
+appId: com.nav1885.micromoment
+---
+- launchApp:
+    clearState: true
+- runFlow: _skip_onboarding.yaml
+
+# Open new habit screen
+- tapOn: "Add Habit"
+- assertVisible: "New Habit"
+
+# Type habit name
+- tapOn:
+    text: "Habit name"
+- inputText: "Morning stretch"
+
+# Select an emoji
+- tapOn:
+    text: "Select emoji 🧘"
+
+# Pick Evening
+- tapOn: "Evening"
+
+# Stepper: decrease then increase duration
+- tapOn:
+    text: "Decrease duration"
+- tapOn:
+    text: "Increase duration"
+
+# Save
+- tapOn: "Save Habit"
+
+# Habit appears on home screen
+- assertVisible: "Morning stretch"

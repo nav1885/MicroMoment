@@ -24,9 +24,7 @@ export default function ProgressScreen() {
   const colors = useThemeColors()
   const { habits, loadHabits, loadStreaks } = useHabitStore()
 
-  // date → count of completions (for heatmap + weekly row)
   const [heatmapData, setHeatmapData] = useState<Map<string, number>>(new Map())
-  // habitId → StreakResult (all-time)
   const [habitStats, setHabitStats] = useState<Record<string, StreakResult>>({})
 
   useFocusEffect(
@@ -38,7 +36,6 @@ export default function ProgressScreen() {
   )
 
   const loadScreenData = async () => {
-    // Heatmap: last 56 days
     const endDate = localDateString(0)
     const startDate = localDateString(HEATMAP_DAYS - 1)
     const rangeCompletions = await getCompletionsByDateRange(startDate, endDate)
@@ -50,7 +47,6 @@ export default function ProgressScreen() {
     setHeatmapData(map)
   }
 
-  // Load all-time stats for each visible habit whenever habits list changes
   const loadHabitStats = useCallback(async () => {
     if (habits.length === 0) return
     const entries = await Promise.all(
@@ -63,7 +59,6 @@ export default function ProgressScreen() {
     setHabitStats(Object.fromEntries(entries))
   }, [habits])
 
-  // Run when habits list is populated
   React.useEffect(() => {
     loadHabitStats()
   }, [loadHabitStats])
@@ -74,21 +69,19 @@ export default function ProgressScreen() {
   const dayLetters = last7.map((d) => ['S', 'M', 'T', 'W', 'T', 'F', 'S'][new Date(d).getDay()])
 
   // ── Heatmap grid (snapped to Monday) ──
-  // Find the most recent Monday on or before today
   const todayForGrid = new Date()
-  const dayOfWeek = todayForGrid.getDay() // 0=Sun … 6=Sat
-  const daysSinceMonday = (dayOfWeek + 6) % 7 // 0=Mon … 6=Sun
+  const dayOfWeek = todayForGrid.getDay()
+  const daysSinceMonday = (dayOfWeek + 6) % 7
   const gridStart = new Date(todayForGrid)
-  gridStart.setDate(gridStart.getDate() - daysSinceMonday - 7 * 7) // 8 Mondays ago
+  gridStart.setDate(gridStart.getDate() - daysSinceMonday - 7 * 7)
   gridStart.setHours(0, 0, 0, 0)
 
   const gridDates = Array.from({ length: HEATMAP_DAYS }, (_, i) => {
     const d = new Date(gridStart)
     d.setDate(d.getDate() + i)
-    return d.toLocaleDateString('en-CA') // YYYY-MM-DD
+    return d.toLocaleDateString('en-CA')
   })
 
-  // Label for the start of each week row
   const weekLabels = Array.from({ length: HEATMAP_DAYS / 7 }, (_, week) => {
     const d = new Date(gridStart)
     d.setDate(d.getDate() + week * 7)
@@ -98,11 +91,12 @@ export default function ProgressScreen() {
   const totalHabits = Math.max(habits.length, 1)
 
   const cellColor = (count: number): string => {
-    if (count === 0) return colors.ringBackground
+    if (count === 0) return colors.heatmap0
     const ratio = count / totalHabits
-    if (ratio >= 1) return colors.ringFill
-    if (ratio >= 0.5) return colors.primary
-    return colors.primaryLight
+    if (ratio >= 1) return colors.heatmap4
+    if (ratio >= 0.75) return colors.heatmap3
+    if (ratio >= 0.5) return colors.heatmap2
+    return colors.heatmap1
   }
 
   return (
@@ -118,7 +112,7 @@ export default function ProgressScreen() {
         <View
           style={[
             styles.card,
-            { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            { backgroundColor: colors.cardBackground, shadowColor: colors.text },
           ]}
         >
           <Text style={[styles.cardTitle, { color: colors.sectionHeader }]}>LAST 7 DAYS</Text>
@@ -130,7 +124,7 @@ export default function ProgressScreen() {
                   <View
                     style={[
                       styles.dayDot,
-                      { backgroundColor: active ? colors.ringFill : colors.ringBackground },
+                      { backgroundColor: active ? colors.primary : colors.heatmap0 },
                     ]}
                     accessibilityLabel={`${date}: ${active ? 'active' : 'no activity'}`}
                   />
@@ -157,10 +151,12 @@ export default function ProgressScreen() {
                   key={habit.id}
                   style={[
                     styles.habitRow,
-                    { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                    { backgroundColor: colors.cardBackground, shadowColor: colors.text },
                   ]}
                 >
-                  <Text style={styles.habitEmoji}>{habit.emoji}</Text>
+                  <View style={[styles.habitEmojiWrap, { backgroundColor: colors.primary + '18' }]}>
+                    <Text style={styles.habitEmoji}>{habit.emoji}</Text>
+                  </View>
                   <View style={styles.habitInfo}>
                     <Text
                       style={[styles.habitName, { color: colors.text }]}
@@ -169,14 +165,14 @@ export default function ProgressScreen() {
                       {habit.name}
                     </Text>
                     <View style={styles.habitMeta}>
-                      <Text style={[styles.metaStat, { color: colors.primary }]}>
+                      <Text style={[styles.metaStat, { color: colors.streak }]}>
                         🔥 {stats?.currentStreak ?? 0}
                       </Text>
-                      <Text style={[styles.metaDot, { color: colors.border }]}> · </Text>
+                      <Text style={[styles.metaDivider, { color: colors.border }]}>·</Text>
                       <Text style={[styles.metaStat, { color: colors.textSecondary }]}>
                         Best {stats?.longestStreak ?? 0}
                       </Text>
-                      <Text style={[styles.metaDot, { color: colors.border }]}> · </Text>
+                      <Text style={[styles.metaDivider, { color: colors.border }]}>·</Text>
                       <Text style={[styles.metaStat, { color: colors.textSecondary }]}>
                         {stats?.totalCompletions ?? 0} done
                       </Text>
@@ -231,52 +227,59 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { flex: 1 },
   content: { padding: 20, paddingBottom: 48 },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 20 },
-  // Card
+  title: { fontSize: 28, fontWeight: '700', marginBottom: 24 },
   card: {
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 24,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   cardTitle: {
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  // Weekly row
-  weekRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 },
-  dayCell: { alignItems: 'center', gap: 4 },
-  dayDot: { width: 28, height: 28, borderRadius: 14 },
+  weekRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 12 },
+  dayCell: { alignItems: 'center', gap: 5 },
+  dayDot: { width: 30, height: 30, borderRadius: 15 },
   dayLabel: { fontSize: 11, fontWeight: '600' },
   weekSummary: { fontSize: 13, textAlign: 'center' },
-  // Section
   section: { marginBottom: 24 },
   sectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 10 },
-  // Habit rows
   habitRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: 16,
     padding: 14,
     marginBottom: 8,
     gap: 12,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  habitEmoji: { fontSize: 28 },
+  habitEmojiWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  habitEmoji: { fontSize: 22 },
   habitInfo: { flex: 1 },
   habitName: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
-  habitMeta: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
+  habitMeta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   metaStat: { fontSize: 13, fontWeight: '500' },
-  metaDot: { fontSize: 13 },
-  // Heatmap
+  metaDivider: { fontSize: 13 },
   heatmap: { gap: 4, alignItems: 'center' },
   heatRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   weekLabel: { fontSize: 11, fontWeight: '500', width: 44, textAlign: 'right' },
   heatCells: { flexDirection: 'row', gap: 4 },
   heatCell: { width: 32, height: 32, borderRadius: 6 },
-  // Empty
   empty: { alignItems: 'center', paddingVertical: 32 },
   emptyText: { fontSize: 15, textAlign: 'center', lineHeight: 22 },
 })

@@ -1,0 +1,7 @@
+appId: com.nav1885.micromoment
+---
+- tapOn: "Add Habit"
+- tapOn:
+    text: "Habit name"
+- inputText: "${HABIT_NAME}"
+- tapOn: "Save Habit"

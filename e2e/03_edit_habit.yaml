@@ -1,0 +1,34 @@
+appId: com.nav1885.micromoment
+---
+- launchApp:
+    clearState: true
+- runFlow: _skip_onboarding.yaml
+
+# Add a habit
+- tapOn: "Add Habit"
+- tapOn:
+    text: "Habit name"
+- inputText: "Read books"
+- tapOn: "Save Habit"
+
+# Swipe left on the card to reveal actions
+- swipe:
+    direction: LEFT
+    element:
+      text: "Read books"
+
+# Tap Edit
+- tapOn:
+    text: "Edit habit"
+
+# Change the name
+- clearText:
+    id: "Habit name"
+- inputText: "Read 10 pages"
+
+# Save
+- tapOn: "Save Changes"
+
+# Updated name visible on home
+- assertVisible: "Read 10 pages"
+- assertNotVisible: "Read books"

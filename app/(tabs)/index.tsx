@@ -14,12 +14,12 @@ import DraggableFlatList, {
 } from 'react-native-draggable-flatlist'
 import ConfettiCannon from 'react-native-confetti-cannon'
 import { useFocusEffect, useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { useHabitStore } from '../../store/habitStore'
 import { CompletionRing } from '../../components/CompletionRing'
 import { HabitCard } from '../../components/HabitCard'
 import { DailyMessage } from '../../components/DailyMessage'
 import { useThemeColors } from '../../hooks/useThemeColors'
-
 import { AnimatedPressable } from '../../components/AnimatedPressable'
 import { trackHabitCompleted, trackStreakMilestone } from '../../utils/analytics'
 import type { Habit } from '../../db/habits'
@@ -135,7 +135,7 @@ export default function HomeScreen() {
       {/* Completion ring */}
       {habits.length > 0 && (
         <View style={styles.ringRow}>
-          <CompletionRing completed={completedCount} total={habits.length} size={80} />
+          <CompletionRing completed={completedCount} total={habits.length} size={88} />
         </View>
       )}
 
@@ -152,18 +152,21 @@ export default function HomeScreen() {
 
       {/* 5-habit cap message */}
       {habits.length >= 5 && (
-        <View style={[styles.capBanner, { backgroundColor: colors.primaryLight }]}>
+        <View style={[styles.capBanner, { backgroundColor: colors.primary + '15' }]}>
           <Text style={[styles.capText, { color: colors.primary }]}>
-            You have 5 habits. Focus on mastering these first.
+            You've reached 5 habits. Focus on mastering these first.
           </Text>
         </View>
       )}
 
       {/* Drag hint */}
       {habits.length > 1 && (
-        <Text style={[styles.dragHint, { color: colors.textSecondary }]}>
-          Hold ≡ to reorder
-        </Text>
+        <View style={styles.dragHintRow}>
+          <Ionicons name="reorder-two" size={14} color={colors.textSecondary} />
+          <Text style={[styles.dragHint, { color: colors.textSecondary }]}>
+            Hold to reorder
+          </Text>
+        </View>
       )}
     </View>
   )
@@ -176,6 +179,7 @@ export default function HomeScreen() {
         style={[
           styles.addButton,
           {
+            backgroundColor: habits.length >= 5 ? 'transparent' : colors.primary + '12',
             borderColor: habits.length >= 5 ? colors.border : colors.primary,
             opacity: habits.length >= 5 ? 0.4 : 1,
           },
@@ -184,13 +188,18 @@ export default function HomeScreen() {
         accessibilityLabel="Add new habit"
         accessibilityState={{ disabled: habits.length >= 5 }}
       >
+        <Ionicons
+          name="add"
+          size={20}
+          color={habits.length >= 5 ? colors.textSecondary : colors.primary}
+        />
         <Text
           style={[
             styles.addButtonText,
             { color: habits.length >= 5 ? colors.textSecondary : colors.primary },
           ]}
         >
-          + Add Habit
+          Add Habit
         </Text>
       </AnimatedPressable>
     </View>
@@ -224,24 +233,27 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   content: { paddingHorizontal: 20, paddingBottom: 40 },
-  listHeader: { paddingTop: 20, paddingBottom: 8 },
+  listHeader: { paddingTop: 24, paddingBottom: 8 },
   listFooter: { paddingTop: 8 },
-  header: { marginBottom: 20 },
+  header: { marginBottom: 24 },
   date: { fontSize: 14, fontWeight: '500', marginBottom: 4 },
-  ringRow: { alignItems: 'center', marginBottom: 24 },
-  emptyState: { alignItems: 'center', paddingVertical: 48 },
-  emptyEmoji: { fontSize: 48, marginBottom: 12 },
+  ringRow: { alignItems: 'center', marginBottom: 28 },
+  emptyState: { alignItems: 'center', paddingVertical: 56 },
+  emptyEmoji: { fontSize: 52, marginBottom: 14 },
   emptyTitle: { fontSize: 20, fontWeight: '700', marginBottom: 8 },
   emptySubtitle: { fontSize: 15, textAlign: 'center', lineHeight: 22 },
-  capBanner: { borderRadius: 10, padding: 12, marginBottom: 16 },
-  capText: { fontSize: 14, fontWeight: '600', textAlign: 'center' },
-  dragHint: { fontSize: 11, textAlign: 'center', marginBottom: 8 },
+  capBanner: { borderRadius: 12, padding: 12, marginBottom: 16 },
+  capText: { fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  dragHintRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 8 },
+  dragHint: { fontSize: 12 },
   addButton: {
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    paddingVertical: 14,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderRadius: 14,
+    paddingVertical: 15,
     marginTop: 8,
   },
   addButtonText: { fontSize: 15, fontWeight: '600' },

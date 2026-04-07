@@ -1,0 +1,29 @@
+appId: com.nav1885.micromoment
+---
+- launchApp:
+    clearState: true
+- runFlow: _skip_onboarding.yaml
+
+# Open new habit form
+- tapOn: "Add Habit"
+- tapOn:
+    text: "Habit name"
+- inputText: "Evening yoga"
+
+# Open reminder picker
+- tapOn:
+    text: "Set reminder"
+- assertVisible: "Reminder"
+
+# Select 30 min before
+- tapOn: "30 min"
+
+# Confirm
+- tapOn: "Set Reminder"
+
+# Reminder row should no longer say "No reminder"
+- assertNotVisible: "No reminder"
+
+# Save
+- tapOn: "Save Habit"
+- assertVisible: "Evening yoga"
