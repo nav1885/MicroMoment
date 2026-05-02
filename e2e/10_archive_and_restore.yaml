@@ -9,7 +9,7 @@ appId: com.nav1885.micromoment
 - tapOn:
     text: "Habit name"
 - inputText: "Stretch"
-- tapOn: "Save Habit"
+- tapOn: "Save habit"
 
 # Open detail
 - tapOn: "Stretch"

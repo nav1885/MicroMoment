@@ -27,7 +27,7 @@ appId: com.nav1885.micromoment
     text: "Increase duration"
 
 # Save
-- tapOn: "Save Habit"
+- tapOn: "Save habit"
 
 # Habit appears on home screen
 - assertVisible: "Morning stretch"

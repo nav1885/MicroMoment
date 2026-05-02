@@ -9,7 +9,7 @@ appId: com.nav1885.micromoment
 - tapOn:
     text: "Habit name"
 - inputText: "Meditate"
-- tapOn: "Save Habit"
+- tapOn: "Save habit"
 
 # Tap the habit name to open detail screen
 - tapOn: "Meditate"
