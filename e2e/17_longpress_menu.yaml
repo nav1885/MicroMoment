@@ -1,0 +1,17 @@
+appId: com.nav1885.micromoment
+---
+- launchApp:
+    clearState: true
+- runFlow: _skip_onboarding.yaml
+
+- tapOn: "Add Habit"
+- tapOn:
+    text: "Habit name"
+- inputText: "Longpress me"
+- tapOn: "Save habit"
+
+# Long-press the card → opens swipe action menu (Edit / Delete)
+- longPressOn:
+    text: "Longpress me"
+- assertVisible: "Edit"
+- assertVisible: "Delete"

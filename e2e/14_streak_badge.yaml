@@ -1,0 +1,19 @@
+appId: com.nav1885.micromoment
+---
+# Streak >= 2 across consecutive days cannot be simulated without DB seeding.
+# This flow asserts the badge is NOT shown after a single completion (streak == 1).
+- launchApp:
+    clearState: true
+- runFlow: _skip_onboarding.yaml
+
+- tapOn: "Add Habit"
+- tapOn:
+    text: "Habit name"
+- inputText: "Streak test"
+- tapOn: "Save habit"
+
+- tapOn:
+    text: "Mark habit complete"
+
+# After 1 completion the 🔥 badge must not appear (gated by streak >= 2)
+- assertNotVisible: "🔥"
