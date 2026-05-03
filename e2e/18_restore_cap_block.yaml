@@ -1,0 +1,46 @@
+appId: com.nav1885.micromoment
+---
+- launchApp:
+    clearState: true
+- runFlow: _skip_onboarding.yaml
+
+# Add 5 habits (cap)
+- runFlow:
+    file: _add_one_habit.yaml
+    env:
+      HABIT_NAME: "Habit One"
+- runFlow:
+    file: _add_one_habit.yaml
+    env:
+      HABIT_NAME: "Habit Two"
+- runFlow:
+    file: _add_one_habit.yaml
+    env:
+      HABIT_NAME: "Habit Three"
+- runFlow:
+    file: _add_one_habit.yaml
+    env:
+      HABIT_NAME: "Habit Four"
+- runFlow:
+    file: _add_one_habit.yaml
+    env:
+      HABIT_NAME: "Habit Five"
+
+# Archive Habit One via swipe-left → Edit → Archive in Detail
+- tapOn: "Habit One"
+- tapOn: "Edit"
+- tapOn:
+    text: "Archive habit"
+- tapOn: "Archive"
+
+# Add a replacement so we are at 5 active again
+- runFlow:
+    file: _add_one_habit.yaml
+    env:
+      HABIT_NAME: "Replacement"
+
+# Try to restore Habit One → must show "Cannot restore" alert
+- tapOn: "Settings"
+- tapOn:
+    text: "Restore Habit One"
+- assertVisible: "Cannot restore"

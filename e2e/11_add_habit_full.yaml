@@ -1,0 +1,40 @@
+appId: com.nav1885.micromoment
+---
+- launchApp:
+    clearState: true
+- runFlow: _skip_onboarding.yaml
+
+# Open new habit form
+- tapOn: "Add Habit"
+- assertVisible: "New Habit"
+
+# Pick a non-default emoji
+- tapOn:
+    text: "Select emoji 🏃"
+
+# Name
+- tapOn:
+    text: "Habit name"
+- inputText: "Evening run"
+
+# Time of day → Evening
+- tapOn: "Evening"
+
+# Duration: decrease twice (5 → 3)
+- tapOn:
+    text: "Decrease duration"
+- tapOn:
+    text: "Decrease duration"
+
+# Add reminder
+- tapOn:
+    text: "Set reminder"
+- tapOn: "15 min"
+- tapOn: "Set Reminder"
+
+# Save
+- tapOn: "Save habit"
+
+# Habit visible on Today
+- assertVisible: "Evening run"
+- assertVisible: "3 min"

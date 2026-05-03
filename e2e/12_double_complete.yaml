@@ -1,0 +1,24 @@
+appId: com.nav1885.micromoment
+---
+- launchApp:
+    clearState: true
+- runFlow: _skip_onboarding.yaml
+
+- tapOn: "Add Habit"
+- tapOn:
+    text: "Habit name"
+- inputText: "Hydrate"
+- tapOn: "Save habit"
+
+# Tap once → completed
+- tapOn:
+    text: "Mark habit complete"
+- assertVisible:
+    text: "Habit completed"
+
+# Tap again on the now-completed checkbox → still completed, no error UI, no toast
+- tapOn:
+    text: "Habit completed"
+- assertVisible:
+    text: "Habit completed"
+- assertNotVisible: "already"

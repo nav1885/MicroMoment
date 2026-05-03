@@ -1,0 +1,20 @@
+appId: com.nav1885.micromoment
+---
+# Confetti at 7/14/21/30/60/90/180/365-day streaks requires deterministic
+# multi-day completion seeding which the runtime doesn't expose. Verify only
+# that no confetti renders on first completion (streak=1, non-milestone).
+- launchApp:
+    clearState: true
+- runFlow: _skip_onboarding.yaml
+
+- tapOn: "Add Habit"
+- tapOn:
+    text: "Habit name"
+- inputText: "First day"
+- tapOn: "Save habit"
+
+- tapOn:
+    text: "Mark habit complete"
+
+# Should NOT see milestone-only UI on streak=1
+- assertNotVisible: "🎉"
