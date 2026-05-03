@@ -16,7 +16,7 @@ interface CheckButtonProps {
   size?: number
 }
 
-export function CheckButton({ completed, onPress, size = 36 }: CheckButtonProps) {
+export function CheckButton({ completed, onPress, size = 44 }: CheckButtonProps) {
   const colors = useThemeColors()
   const scale = useSharedValue(1)
 

@@ -42,6 +42,16 @@ export async function initialiseDatabase(database: SQLite.SQLiteDatabase): Promi
   // Per-habit reminder columns — added after initial release, safe to run repeatedly
   try { await database.execAsync('ALTER TABLE habits ADD COLUMN reminder_time TEXT') } catch {}
   try { await database.execAsync('ALTER TABLE habits ADD COLUMN reminder_offset_min INTEGER') } catch {}
+
+  // One completion per (habit, day). Pre-dedupe so the UNIQUE index can be added to legacy DBs.
+  await database.execAsync(`
+    DELETE FROM completions
+    WHERE rowid NOT IN (
+      SELECT MIN(rowid) FROM completions GROUP BY habit_id, completed_date
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS uniq_completions_habit_date
+      ON completions(habit_id, completed_date);
+  `)
 }
 
 export function closeDatabase(): void {
