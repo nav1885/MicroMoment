@@ -29,11 +29,21 @@ export async function insertCompletion(input: InsertCompletionInput): Promise<Co
   const grace_used = input.grace_used ? 1 : 0
   const note = input.note ?? null
 
-  await db.runAsync(
-    `INSERT INTO completions (id, habit_id, completed_date, completed_at, note, grace_used)
+  // INSERT OR IGNORE atomically enforces the (habit_id, completed_date) UNIQUE index.
+  // On conflict, return the existing row instead of fabricating a new one.
+  const result = await db.runAsync(
+    `INSERT OR IGNORE INTO completions (id, habit_id, completed_date, completed_at, note, grace_used)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [id, input.habit_id, completed_date, completed_at, note, grace_used]
   )
+
+  if (result.changes === 0) {
+    const existing = await db.getFirstAsync<Completion>(
+      'SELECT * FROM completions WHERE habit_id = ? AND completed_date = ?',
+      [input.habit_id, completed_date]
+    )
+    if (existing) return existing
+  }
 
   return { id, habit_id: input.habit_id, completed_date, completed_at, note, grace_used }
 }

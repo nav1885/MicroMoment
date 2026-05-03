@@ -35,7 +35,7 @@ describe('insertCompletion', () => {
   it('inserts with correct fields and returns completion object', async () => {
     const result = await insertCompletion({ habit_id: 'habit-1' })
     expect(mockDb.runAsync).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT INTO completions'),
+      expect.stringContaining('INSERT OR IGNORE INTO completions'),
       expect.arrayContaining(['test-uuid-1234-5678-abcd', 'habit-1', TODAY_STR])
     )
     expect(result.habit_id).toBe('habit-1')

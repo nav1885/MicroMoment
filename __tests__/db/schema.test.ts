@@ -23,10 +23,17 @@ beforeEach(() => {
 describe('initialiseDatabase', () => {
   it('executes CREATE TABLE statements without error', async () => {
     await initialiseDatabase(mockDb as any)
-    expect(mockDb.execAsync).toHaveBeenCalledTimes(1)
+    expect(mockDb.execAsync).toHaveBeenCalled()
     const sql = mockDb.execAsync.mock.calls[0][0] as string
     expect(sql).toContain('CREATE TABLE IF NOT EXISTS habits')
     expect(sql).toContain('CREATE TABLE IF NOT EXISTS completions')
+  })
+
+  it('enforces one completion per habit per day via UNIQUE index', async () => {
+    await initialiseDatabase(mockDb as any)
+    const allSql = mockDb.execAsync.mock.calls.map((c: unknown[]) => c[0] as string).join('\n')
+    expect(allSql).toContain('CREATE UNIQUE INDEX IF NOT EXISTS uniq_completions_habit_date')
+    expect(allSql).toContain('ON completions(habit_id, completed_date)')
   })
 
   it('enables WAL journal mode and foreign keys', async () => {
