@@ -3,6 +3,18 @@ set -euo pipefail
 
 export PATH="$PATH:$HOME/.maestro/bin"
 export ANDROID_HOME=/usr/local/share/android-commandlinetools
+
+# Maestro requires a JRE. Auto-locate Java if JAVA_HOME isn't already set.
+if [ -z "${JAVA_HOME:-}" ]; then
+  for candidate in /opt/homebrew/opt/openjdk@17 /opt/homebrew/opt/openjdk /usr/local/opt/openjdk@17 /usr/local/opt/openjdk; do
+    if [ -d "$candidate" ]; then
+      export JAVA_HOME="$candidate"
+      export PATH="$JAVA_HOME/bin:$PATH"
+      break
+    fi
+  done
+fi
+
 DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Pick a device. Override with: DEVICE=<id> bash run_all.sh
