@@ -18,6 +18,7 @@
 | completedCard | #F0F0F0 |
 | completedText | #AAAAAA |
 | streak | #FF9F0A |
+| amber | #E8A020 |
 | danger | #FF3B30 |
 | sectionHeader | #9E9E9E |
 | checkActive | #34A853 |
@@ -27,7 +28,9 @@
 
 **Dark** — same semantic tokens with adjusted values (background #121212, surface #1E1E1E, text #F5F5F5, textSecondary #A0A0A0, primaryLight #1E6E36, border #2C2C2C, etc.). Primary green (#34A853) and danger red (#FF3B30) are shared.
 
-**Heatmap scale (0–4)**: blue gradient from #F0F4FF (empty) to #0A84FF (full).
+**Heatmap scale** — semantic tokens `heatmap0`…`heatmap4` (light → full intensity).
+- Light: #F0F4FF → #C7DCFF → #8DB8FF → #4285F4 → #0A84FF
+- Dark:  #1A1F2E → #1E3A5F → #1A5CA8 → #1A7FE8 → #0A84FF
 
 ### 1.2 Typography (`constants/typography.ts`)
 
@@ -91,9 +94,9 @@ Full-screen primary-green background. Horizontal `FlatList` (scrollEnabled: fals
 ### 3.2 Today (`app/(tabs)/index.tsx`)
 - Header: date string + DailyMessage.
 - Body: `DraggableFlatList` of HabitCards.
-- Footer / inline: drag hint (≥ 2 habits), 5-habit cap banner (when at cap).
-- Empty state: friendly prompt + add CTA.
-- FAB-style "+" in header right; disabled at cap.
+- List header: drag hint (`Hold to reorder`, ≥ 2 habits).
+- List footer: **Add Habit** button — full-width, primary-tinted background (`primary + '12'`), `+` icon + label, lives below the list (not in the nav header). Better thumb reach than a header FAB. At the 5-habit cap: opacity 0.4, no haptic, transparent fill, secondary-text color, `accessibilityState.disabled = true`.
+- Empty state: friendly prompt + the same Add Habit footer button.
 - Confetti overlay on milestone streak completion.
 
 ### 3.3 Progress (`app/(tabs)/progress.tsx`)
