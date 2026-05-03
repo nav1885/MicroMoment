@@ -25,5 +25,5 @@ appId: com.nav1885.micromoment
 - assertNotVisible: "No reminder"
 
 # Save
-- tapOn: "Save Habit"
+- tapOn: "Save habit"
 - assertVisible: "Evening yoga"

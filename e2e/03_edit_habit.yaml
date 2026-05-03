@@ -9,7 +9,7 @@ appId: com.nav1885.micromoment
 - tapOn:
     text: "Habit name"
 - inputText: "Read books"
-- tapOn: "Save Habit"
+- tapOn: "Save habit"
 
 # Swipe left on the card to reveal actions
 - swipe:
@@ -27,7 +27,7 @@ appId: com.nav1885.micromoment
 - inputText: "Read 10 pages"
 
 # Save
-- tapOn: "Save Changes"
+- tapOn: "Save changes"
 
 # Updated name visible on home
 - assertVisible: "Read 10 pages"

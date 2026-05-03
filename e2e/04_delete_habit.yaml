@@ -9,7 +9,7 @@ appId: com.nav1885.micromoment
 - tapOn:
     text: "Habit name"
 - inputText: "Temp habit"
-- tapOn: "Save Habit"
+- tapOn: "Save habit"
 - assertVisible: "Temp habit"
 
 # Swipe left to reveal delete

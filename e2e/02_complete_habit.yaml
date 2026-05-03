@@ -9,7 +9,7 @@ appId: com.nav1885.micromoment
 - tapOn:
     text: "Habit name"
 - inputText: "Daily walk"
-- tapOn: "Save Habit"
+- tapOn: "Save habit"
 
 # Mark it complete from home
 - tapOn:
