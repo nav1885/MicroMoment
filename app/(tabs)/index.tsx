@@ -20,6 +20,7 @@ import { CompletionRing } from '../../components/CompletionRing'
 import { HabitCard } from '../../components/HabitCard'
 import { DailyMessage } from '../../components/DailyMessage'
 import { useThemeColors } from '../../hooks/useThemeColors'
+import { useReduceMotion } from '../../hooks/useReduceMotion'
 import { AnimatedPressable } from '../../components/AnimatedPressable'
 import { trackHabitCompleted, trackStreakMilestone } from '../../utils/analytics'
 import type { Habit } from '../../db/habits'
@@ -36,6 +37,7 @@ function formatDate(date: Date): string {
 
 export default function HomeScreen() {
   const colors = useThemeColors()
+  const reduceMotion = useReduceMotion()
   const router = useRouter()
   const confettiRef = useRef<ConfettiCannon>(null)
   const {
@@ -68,7 +70,7 @@ export default function HomeScreen() {
       const newStreak = await getHabitStreak(habitId)
       trackHabitCompleted(habitId, newStreak)
       if (MILESTONE_STREAKS.has(newStreak)) {
-        confettiRef.current?.start()
+        if (!reduceMotion) confettiRef.current?.start()
         trackStreakMilestone(habitId, newStreak)
       }
       loadStreaks()

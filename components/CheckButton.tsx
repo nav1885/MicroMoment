@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import * as Haptics from 'expo-haptics'
 import { useThemeColors } from '../hooks/useThemeColors'
+import { useReduceMotion } from '../hooks/useReduceMotion'
 
 interface CheckButtonProps {
   completed: boolean
@@ -18,6 +19,7 @@ interface CheckButtonProps {
 
 export function CheckButton({ completed, onPress, size = 44 }: CheckButtonProps) {
   const colors = useThemeColors()
+  const reduceMotion = useReduceMotion()
   const scale = useSharedValue(1)
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -27,15 +29,12 @@ export function CheckButton({ completed, onPress, size = 44 }: CheckButtonProps)
   const handlePress = () => {
     if (completed) return
 
-    scale.value = withSpring(1.3, { damping: 6 }, () => {
-      scale.value = withSpring(1)
-    })
-
-    AccessibilityInfo.isReduceMotionEnabled().then((reduced) => {
-      if (!reduced) {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-      }
-    })
+    if (!reduceMotion) {
+      scale.value = withSpring(1.3, { damping: 6 }, () => {
+        scale.value = withSpring(1)
+      })
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    }
 
     runOnJS(onPress)()
   }

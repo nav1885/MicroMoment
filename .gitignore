@@ -47,3 +47,6 @@ google-service-account.json
 
 # test coverage
 coverage/
+
+# Claude Code user-local config
+.claude/

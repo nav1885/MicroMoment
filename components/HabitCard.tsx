@@ -12,6 +12,12 @@ import { CheckButton } from './CheckButton'
 import { useThemeColors } from '../hooks/useThemeColors'
 import type { Habit } from '../db/habits'
 
+const TIME_OF_DAY_META = {
+  morning: '🌅 Morning',
+  afternoon: '☀️ Afternoon',
+  evening: '🌙 Evening',
+} as const
+
 interface HabitCardProps {
   habit: Habit
   completed: boolean
@@ -112,7 +118,7 @@ export function HabitCard({ habit, completed, streak, onComplete, onEdit, onDele
               </Text>
               <View style={styles.meta}>
                 <Text style={[styles.duration, { color: colors.textSecondary }]}>
-                  {habit.time_estimate_min} min
+                  {habit.time_estimate_min} min · {TIME_OF_DAY_META[habit.time_of_day as keyof typeof TIME_OF_DAY_META]}
                 </Text>
                 {streak !== undefined && streak >= 2 && (
                   <View style={[styles.streakBadge, { backgroundColor: colors.streak + '20' }]}>
