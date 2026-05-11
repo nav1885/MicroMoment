@@ -318,6 +318,8 @@ export const DAILY_MESSAGES: string[] = [
   "Future you is grateful for present you.",
   "Excellence is a habit, not an event.",
   "You made the time. That's everything.",
+  "Showing up is the whole strategy.",
+  "Steady wins. Always.",
 ]
 
 function getDayOfYear(date: Date): number {

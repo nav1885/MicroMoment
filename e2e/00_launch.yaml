@@ -4,4 +4,4 @@ appId: com.nav1885.micromoment
     clearState: true
 - runFlow: _skip_onboarding.yaml
 - assertVisible: "No habits yet"
-- assertVisible: "Add Habit"
+- assertVisible: "Add new habit"

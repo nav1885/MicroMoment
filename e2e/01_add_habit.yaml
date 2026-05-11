@@ -5,7 +5,7 @@ appId: com.nav1885.micromoment
 - runFlow: _skip_onboarding.yaml
 
 # Open new habit screen
-- tapOn: "Add Habit"
+- tapOn: "Add new habit"
 - assertVisible: "New Habit"
 
 # Type habit name

@@ -1,7 +1,25 @@
 appId: com.nav1885.micromoment
 ---
-# Tap through 3 onboarding slides then land on Today tab
-- tapOn: "Next"
-- tapOn: "Next"
-- tapOn: "Get Started"
-- assertVisible: "Today"
+# Tap through 3 onboarding slides then land on Today tab.
+# Targets accessibilityLabel values — the Pressable wraps the inner
+# <Text> so only the a11y label is discoverable. waitForAnimationToEnd
+# between taps gates the FlatList scroll so consecutive taps don't
+# collapse onto the same slide.
+# Use the dot-indicator labels as gates — they update synchronously
+# with the currentIndex state, so they're a reliable signal that the
+# slide actually advanced before we tap Next again.
+- extendedWaitUntil:
+    visible: "Slide 1 of 3"
+    timeout: 5000
+- tapOn: "Next slide"
+- extendedWaitUntil:
+    visible: "Slide 2 of 3"
+    timeout: 5000
+- tapOn: "Next slide"
+- extendedWaitUntil:
+    visible: "Slide 3 of 3"
+    timeout: 5000
+- tapOn: "Get started"
+- extendedWaitUntil:
+    visible: "No habits yet"
+    timeout: 8000
